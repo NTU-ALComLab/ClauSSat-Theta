@@ -1,4 +1,4 @@
-# DBG=1
+#DBG=1
 # Choose solver (MiniSat or Glucose)
 USE_GL=1
 # Choose version (minisat_simp, glucose_parallel for USE_SIMP=0)
@@ -50,9 +50,10 @@ endif
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
 CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated -Wno-misleading-indentation -D _MSC_VER
-#CFLAGS+=-std=c++11
-CFLAGS+=-std=c++0x
+CFLAGS+=-std=c++14
+#CFLAGS+=-std=c++0x
 CFLAGS+=-MMD
+CFLAGS+=-MP
 LIBS+=-lz
 
 # Glucose: No core version after glucose 4.0
@@ -72,6 +73,10 @@ LIBD+=-L./src/minisat/core
 LIBD+=-L./src/minisat/simp
 CFLAGS+=-I./src/minisat/
 endif
+
+LIBS+=-lgmpxx 
+LIBS+=-lgmp
+
 
 ifdef EXPERT # allow using giving options, without options the solver's fairly dumb
 CFLAGS+=-DEXPERT

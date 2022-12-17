@@ -1,8 +1,8 @@
 
 #include "LevelInfo.hh"
 
-LevelInfo::LevelInfo(const Prefix& pref, const vector<double>& prob)
-: pref(pref), prob(prob)
+LevelInfo::LevelInfo(const Prefix& pref, const vector<double>& prob, const vector<double>& thres)
+: pref(pref), prob(prob), thres(thres)
 {
   mxv=-1;
   for (size_t level=0; level<pref.size(); ++level) {

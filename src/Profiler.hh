@@ -38,6 +38,8 @@ struct Profiler
     inline void accum_SAT_time() { accSATTime += time_elapsed(sat_start); }
     inline void set_WMC_time() { wmc_start = high_resolution_clock::now(); }
     inline void accum_WMC_time() { accWMCTime += time_elapsed(wmc_start); }
+    inline void set_WMCIO_time() {wmcio_start = high_resolution_clock::now();}
+    inline void accum_WMCIO_time() { accWMCIOTime += time_elapsed(wmcio_start); }
     inline double get_tot_time() const { return time_elapsed(prgm_start); }
     inline bool is_timeout() const { return get_tot_time() > TIME_LIMIT; }
     inline double time_elapsed(high_resolution_clock::time_point t) const 
@@ -97,6 +99,7 @@ struct Profiler
         os << "==== Runtime Profiling ====\n\n"
            << "  > Time consumed on SAT       = " << p.accSATTime << '\n'
            << "  > Time consumed on WMC       = " << p.accWMCTime << '\n'
+           << "  > Time consumed on WMC IO    = " << p.accWMCIOTime << '\n'
            << "  > Total time consumed        = " << p.get_tot_time() << '\n';
         return os;
     }
@@ -107,6 +110,7 @@ struct Profiler
     high_resolution_clock::time_point prgm_start;
     high_resolution_clock::time_point sat_start;
     high_resolution_clock::time_point wmc_start;
+    high_resolution_clock::time_point wmcio_start;
     std::vector<size_t> selSATCnts;
     std::vector<size_t> selUNSATCnts;
     std::vector<size_t> dropCnts;
@@ -128,6 +132,7 @@ struct Profiler
     size_t      pushUNSATCoreSuccess;
     double      accSATTime;
     double      accWMCTime;
+    double      accWMCIOTime;
 };
 
 #endif

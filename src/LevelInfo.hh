@@ -4,7 +4,7 @@
 #include "DataStructures.hh"
 class LevelInfo {
 public:
-  LevelInfo(const Prefix& pref, const vector<double>& prob);
+  LevelInfo(const Prefix& pref, const vector<double>& prob, const vector<double>& thres);
   inline size_t level(Var v) const {
     assert(v>=0);
     const auto vi=(size_t)v;
@@ -31,6 +31,16 @@ public:
     return pref[lev].first;
   }
 
+  inline bool has_threshold(size_t lev) const{
+    assert(lev<pref.size());
+    return thres[lev] != -1;
+  }
+
+  inline double get_thres(size_t lev) const{
+    assert(lev<pref.size());
+    return thres[lev];
+  }
+
   inline QuantifierType type(Lit l) const {return type(var(l));}
 
   inline size_t max_qlev(const vector<Lit>& v) const {
@@ -48,6 +58,7 @@ public:
 private:
   const Prefix pref;
   const vector<double> prob; // Perry
+  const vector<double> thres;
   Var mxv;
   vector<std::pair<QuantifierType, size_t> > vis;
   LevelInfo(const LevelInfo& o) {assert(0);}

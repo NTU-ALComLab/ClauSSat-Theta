@@ -45,6 +45,7 @@ Var ReadQ::get_max_id() const {return max_id;}
 const vector<Quantification>& ReadQ::get_prefix() const {return quantifications;}
 const vector<LitSet>& ReadQ::get_clauses() const          {return clause_vector;}
 const vector<double>& ReadQ::get_prob() const { return probs; }
+const vector<double>& ReadQ::get_thres() const { return thres; }
 int ReadQ::get_qube_output() const { assert(qube_input); return qube_output; }
 
 void ReadQ::read_cnf_clause(Reader& in, vector<Lit>& lits) {
@@ -67,16 +68,22 @@ void ReadQ::read_quantification(Reader& in, Quantification& quantification)  {
   if (qchar == 'a') quantification.first=UNIVERSAL;
   else if (qchar == 'e') quantification.first=EXISTENTIAL;
   else if (qchar == 'r') quantification.first=RANDOM; // Perry
+  else if (qchar == 't') quantification.first=THRESHOLD;
   else throw ReadException("unexpected quantifier");
 
   // [Perry] Read prob
   float prob = -1;
-  if (qchar == 'r') {
+  if (qchar == 'r' || qchar == 't') {
     skipWhitespace(in);
     prob = parseFloat(in);
-    if (prob > 1 || prob < 0) 
-      throw ReadException("Probability not between 0 and 1");
+    if (prob > 1 || prob < 0 && prob!=-1) 
+      throw ReadException("Probability neither between 0 and 1 nor -1");
     ++in;
+    if(qchar == 't'){
+      thres.push_back(prob);
+      skipLine(in);
+      return;
+    }
   }
 
   vector<Var> variables;
@@ -93,8 +100,8 @@ void ReadQ::read_quantification(Reader& in, Quantification& quantification)  {
         ++in;
         skipWhitespace(in);
         prob = parseFloat(in);
-        if (prob > 1 || prob < 0) 
-          throw ReadException("Probability not between 0 and 1");
+        if (prob > 1 || prob < 0 && prob!=-1) 
+          throw ReadException("Probability neither between 0 and 1 nor -1");
       }
 
       ++in;
@@ -110,6 +117,7 @@ void ReadQ::read_quantification(Reader& in, Quantification& quantification)  {
     }
   }
   quantification.second=VarVector(variables);
+  thres.push_back(-1);
 }
 
 Var ReadQ::parse_variable(Reader& in) {
@@ -158,7 +166,7 @@ void  ReadQ::read_quantifiers() {
       skipLine(r);
       continue;
     }      
-    if (*r != 'e' && *r != 'a' && *r != 'r') break;
+    if (*r != 'e' && *r != 'a' && *r != 'r' && *r != 't') break;
     Quantification quantification;
     read_quantification(r, quantification);
     quantifications.push_back(quantification);
@@ -201,6 +209,44 @@ void ReadQ::read_word(const char* word, size_t length) {
   }
 }
 
+// compact the prefix by removing thrshold quantiication
+void ReadQ::compact_prefix(){
+  double thr_prob = 0;
+  bool   record_thres = false;
+  size_t moving_offset = 0;
+  for(size_t i=0; i<quantifications.size(); ++i){
+    Quantification q = quantifications[i];
+    if (q.first == THRESHOLD){
+      assert(q.second.empty());
+      assert( 0 <= thres[i] && thres[i] <= 1);
+      thr_prob = thres[i];
+      record_thres = true;
+      moving_offset++;
+    }
+    else{
+      if(moving_offset){
+        quantifications[i-moving_offset] = q;
+        if(record_thres)  
+          thres[i-moving_offset] = thr_prob;
+        else             
+          thres[i-moving_offset] = -1;
+        record_thres = false;
+      }
+    }
+  }
+  quantifications.resize(quantifications.size()-moving_offset);
+  thres.resize(thres.size()-moving_offset);
+}
+
+void ReadQ::print_prefix(){
+  assert(thres.size()==quantifications.size());
+  cout << "Prefix:\n";
+  for(size_t i=0; i<quantifications.size(); ++i){
+    cout << quantifications[i].first << " " << thres[i] << ", "; 
+  }
+  cout << endl;
+}
+
 
 void ReadQ::read() {
   read_header();
@@ -221,7 +267,11 @@ void ReadQ::read() {
   }
 
   read_quantifiers();
+  compact_prefix();
   read_clauses();
+
+  // print_prefix();
+  
 
   if (!unquantified_variables.empty ()) {
     if (!quantifications.empty() && quantifications[0].first==EXISTENTIAL) {

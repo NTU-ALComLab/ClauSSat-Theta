@@ -8,13 +8,14 @@
 #include "VarVector.hh"
 #include <vector>
 
-enum    QuantifierType                      {UNIVERSAL=0,EXISTENTIAL=1,RANDOM=2};
+enum    QuantifierType                      {UNIVERSAL=0,EXISTENTIAL=1,RANDOM=2, THRESHOLD=3};
 typedef std::pair<QuantifierType,VarVector> Quantification;
 typedef std::vector<Quantification>         Prefix;
 struct QFla {
   Prefix                pref;
   vector<LitSet>        cnf;
   vector<double>        prob;
+  vector<double>        thres;
 };
 
 inline std::ostream& operator << (std::ostream& outs, QuantifierType qt) {
@@ -22,6 +23,7 @@ inline std::ostream& operator << (std::ostream& outs, QuantifierType qt) {
     case UNIVERSAL: return outs<<"U";
     case EXISTENTIAL: return outs<<"E";
     case RANDOM: return outs<<"R";
+    case THRESHOLD: return outs << "T";
   }
   assert(0);
   return outs;
@@ -46,6 +48,7 @@ inline std::ostream& operator << (std::ostream& outs, const Prefix& p) {
       case UNIVERSAL: outs << 'a'; break;
       case EXISTENTIAL: outs << 'e'; break;
       case RANDOM: outs << 'r'; break;
+      case THRESHOLD: outs << 't'; break;
     }
     outs << " " << qi->second;
     outs << ']' ;
@@ -90,6 +93,7 @@ inline QuantifierType neg(QuantifierType q) {
     case UNIVERSAL: return EXISTENTIAL;
     case EXISTENTIAL: return UNIVERSAL;
     case RANDOM: assert(0); break;
+    case THRESHOLD: assert(0); break; 
   }
   assert(0);
   return EXISTENTIAL;

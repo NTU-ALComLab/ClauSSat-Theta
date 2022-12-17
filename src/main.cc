@@ -104,17 +104,19 @@ int main(int argc, char** argv) {
 	qf.pref=rq.get_prefix();
 	qf.cnf=rq.get_clauses();
     qf.prob=rq.get_prob(); // Perry
+	qf.thres = rq.get_thres();
 	#ifndef NDEBUG
 	cout << "QFla qf = " << endl << qf << endl;
 	#endif
+	// cout << "QFla qf = " << endl << qf << endl;
 	if( qf.pref.size() == 0 ) {
 		assert( 0 );
 		qf.pref.push_back(make_pair(EXISTENTIAL,VarVector()));
 	}
 	bool r = 0;
-	LevelInfo levs(qf.pref, qf.prob);
+	LevelInfo levs(qf.pref, qf.prob, qf.thres);
 	Groups* grs=NULL;
-	grs=new Groups(options,levs,qf);
+	grs=new Groups(options, levs, qf);
 	#ifndef NDEBUG
 	grs->print();
 	#endif
@@ -125,6 +127,7 @@ int main(int argc, char** argv) {
         cout << (options.get_pin()? "CUED\t" : "QESTO\t") << (r?"SAT  ":"UNSAT") << "\t" << read_cpu_time() << endl;
     }
     else {
+		system("rm wmc/*");
         gps->solve_ssat(rq.unsatisfy);
         gps->output_ssat_sol();
         cout << profiler << endl;

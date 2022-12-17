@@ -10,6 +10,7 @@
 #include "Cache.hh"
 #include "Profiler.hh"
 #include "MiniSatExt.hh"
+#include "DnnfWrapper.hh"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -82,6 +83,9 @@ vector<size_t> pv2gr;
 vector<Cache> sel_caches;
 vector<double> ret_prob;
 vector<ProbMap> prob2Learnts;
+
+vec<Var> last_level_map; // map from group_id, selection id, to variables.
+DNNFCounter last_level_counter; //
 
 
  private: 
@@ -162,6 +166,11 @@ void recycle_solver(size_t qlev);
 std::pair<double, double> calculate_prob(size_t qlev, const ProbMap& prob2learnt, bool countZero = false);
 double selection_WMC(size_t qlev, const vector< vector<EncGrp> >& enc_learnts);
 void to_dimacs_weighted(FILE * f, size_t qlev, const vector< vector<EncGrp> >& enc_learnts);
+
+// Incremental Model Counting
+void    to_last_level_random_dimacs(FILE* f);
+void    compile_cnf_to_nnf();
+double  assump_last_level_wmc(const vector< vector<EncGrp> >& enc_learnts);
 
 // Caching
 bool lookup(size_t qlev, const vec<Lit>& parent_selection, double& prob);

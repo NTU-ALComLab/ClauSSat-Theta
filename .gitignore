@@ -4,6 +4,7 @@
 *.or
 *.d
 *.stackdump
+*.vscode*
 qesto
 qesto.exe
 DataStructures.aux

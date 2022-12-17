@@ -26,7 +26,8 @@ public:
     Var                            get_max_id() const;
     const std::vector<Quantification>&  get_prefix() const;
     const std::vector< LitSet >&        get_clauses() const;
-    const std::vector<double>&          get_prob() const;
+    const std::vector<double>&          get_prob() const;  // variable -> probability
+    const std::vector<double>&          get_thres() const; // quantification level -> threshold
     bool                           get_header_read() const;
     int                            get_qube_output() const;
 	bool unsatisfy; // Hank 
@@ -38,7 +39,8 @@ private:
     bool                    _header_read;
     std::vector< LitSet >        clause_vector;
     std::vector<Quantification>  quantifications;
-    std::vector<double>          probs; // Perry
+    std::vector<double>          probs; // Perry    
+    std::vector<double>          thres; 
     std::unordered_set<Var> quantified_variables;
     std::unordered_set<Var> unquantified_variables;
     void                    read_header();
@@ -49,6 +51,8 @@ private:
     Var                     parse_variable(Reader& in);
     int                     parse_lit(Reader& in);
     void                    read_word(const char* word, size_t length);
+    void                    compact_prefix();
+    void                    print_prefix();
 };
 #endif	/* READ2Q_HH */
 
