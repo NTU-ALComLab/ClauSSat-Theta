@@ -163,13 +163,15 @@ void remove_duplicate_lits(size_t qlev, vec<Lit>& cla);
 void recycle_solver(size_t qlev);
 
 // Model counting
-std::pair<double, double> calculate_prob(size_t qlev, const ProbMap& prob2learnt, bool countZero = false);
+std::pair<double, double> calculate_prob(size_t qlev, const ProbMap& prob2Learnt, bool countZero = false);
 double selection_WMC(size_t qlev, const vector< vector<EncGrp> >& enc_learnts);
 void to_dimacs_weighted(FILE * f, size_t qlev, const vector< vector<EncGrp> >& enc_learnts);
 
 // Incremental Model Counting
 void    to_last_level_random_dimacs(FILE* f);
-void    compile_cnf_to_nnf();
+void    to_dimacs_cnf(FILE* f, size_t qlev, const ProbMap& prob2Learnt, vec<Var>& map, size_t& en_var_offset);
+void    compile_cnf_to_nnf(bool last_lev);
+double  incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt, bool has_thres=false, double thres=-1);
 double  assump_last_level_wmc(const vector< vector<EncGrp> >& enc_learnts);
 
 // Caching

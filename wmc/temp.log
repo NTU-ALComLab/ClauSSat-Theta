@@ -2,6 +2,7 @@ cachet version 1.21, December 2005
 copyright 2005, University of Washington
 incorporating code from zchaff, copyright 2004, Princeton University
 Solving wmc/temp.wcnf ......
+Number of unit clauses			0
 
 Learning				ON
 Approximate hashing			ON
@@ -12,7 +13,7 @@ Dynamic heuristic			VSADS
 Cache table size			5242880
 Oldest age allowed			1048576
 Max cache entries			20971520
-Added cache entries			0
+Added cache entries			261
 Removed cache entries			0
 Number of cache hits			0
 Number of pos hits			0
@@ -24,26 +25,26 @@ Number of cross implications		0
 Backtrack factor			2
 Number of far backtrack			0
 
-Number of total components		0
+Number of total components		261
 Number of split components		0
-Number of non-split components		0
+Number of non-split components		261
 Number of SAT residual formula		0
 Number of trivial components		0
 Number of changed components		0
 Number of adjusted components		0
 First component split level		100000
 
-Number of Decisions			0
-Max Decision Level			0
-Number of Variables			1
-Original Num Clauses			2
-Original Num Literals			2
-Added Conflict Clauses			0
-Added Conflict Literals			0
+Number of Decisions			261
+Max Decision Level			9
+Number of Variables			83
+Original Num Clauses			706
+Original Num Literals			6188
+Added Conflict Clauses			262
+Added Conflict Literals			2781
 Deleted Unrelevant clauses		0
 Deleted Unrelevant literals		0
-Number of Implications			1
-Total Run Time				-0.000816
+Number of Implications			5820
+Total Run Time				0.016771
 
 Satisfying probability			0
 s 0

@@ -82,7 +82,7 @@ pair<const int, shared_ptr<Node>> doParseNNF(istream& in) {
     const int nbNodes = stoi(headers[1]);
     vector<shared_ptr<Node>> allNodes;
     allNodes.reserve(nbNodes);
-    cout << "I will parse a graph of " << nbVars << " variables and " << nbNodes << " nodes..." << endl;
+    //cout << "I will parse a graph of " << nbVars << " variables and " << nbNodes << " nodes..." << endl;
     while (getline(in, line)) {
         stringstream ss2{line}; // Insert the string into a stream
         vector<string> fields;  // Create vector to hold our words
@@ -107,7 +107,7 @@ pair<const int, shared_ptr<Node>> doParseNNF(istream& in) {
             cout << "Parsed " << (allNodes.size() / 1000000 )<< " million nodes yet..." << endl;
         }
     }
-    cout << "Done, returning item now..." << endl;
+    //cout << "Done, returning item now..." << endl;
     return make_pair<const int, shared_ptr<Node>>(move(nbVars), move(allNodes.back()));
 }
 

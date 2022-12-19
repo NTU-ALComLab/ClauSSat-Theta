@@ -116,9 +116,9 @@ ostream& Options::print(ostream& out) const {
   out<< endl;
   out<< " -d ";
   out<< "    "<<" enable dynamic dropping ";
+  out<< endl;
   out<< " -i ";
-  out << endl;
-  out<< "    "<<" enable incremental model counting";
+  out<< "    "<<" enable incremental model counting ";
   out<< endl;
   return out;
 }

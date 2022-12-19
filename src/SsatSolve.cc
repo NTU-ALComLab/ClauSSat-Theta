@@ -1,5 +1,6 @@
 #include <signal.h>
 #include <cassert>
+#include <numeric>
 #include "QestoGroups.hh"
 #include "ClausesInversion.hh"
 #include "LitBitSet.hh"
@@ -10,6 +11,8 @@ using SATSPC::lit_Undef;
 using SATSPC::vec;
 
 #define WCNF_FILE "wmc/temp.wcnf"
+#define NNF_FILE  "wmc/temp.nnf"
+#define CNF_FILE  "wmc/temp.cnf"
 #define LOG_FILE "wmc/temp.log"
 #define SATPROB_FILE "wmc/satProb.log"
 #define LAST_LEVEL_CNF "wmc/last.cnf"
@@ -22,6 +25,7 @@ bool check_and_encode(vec<bool> &encoded, Var v);
 Var mapVar(Var v, vec<Var> &map, Var &max);
 void concat_assumptions(vec<Lit> &concat, vec<Lit> &assump1, vec<Lit> &assump2);
 void print_encgrps(const vector<EncGrp> &enc_groups);
+bool is_file_empty(ifstream& f);
 
 double QestoGroups::solve_ssat(bool alreadyUnsat)
 {
@@ -154,6 +158,7 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                     if (qlev == 0)
                         cout << "Update solution, value = " << ret << "\t(time = " << profiler.get_tot_time() << ")\n";
                 }
+
                 if (prob == 1 || (has_thres && prob >= thres_prob))
                 { // early termination
                     minimal_selection_e(qlev, 1, parent_selection);
@@ -220,7 +225,14 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
             else
             {
                 // TODO incremental
-                ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                if(opt.get_increMC()){
+                    ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
+                    //double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                    //cout << "imp / ref = " << ret << " / " << ref  << endl;
+                }
+                else{
+                    ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                }
                 prob2Learnts[qlev].clear();
                 break;
             }
@@ -366,6 +378,7 @@ void QestoGroups::add_learnt_clause_e(size_t qlev, vector<EncGrp> &enc_groups, v
 void QestoGroups::get_learnt_clause_r(size_t qlev, vector<EncGrp> &enc_groups, bool isZero)
 {
     assert(levs.level_type(qlev) == RANDOM);
+    assert(qlev < levs.lev_count()-1);
 
     ++profiler.pruneCnt;
     enc_groups.clear();
@@ -379,18 +392,23 @@ void QestoGroups::get_learnt_clause_r(size_t qlev, vector<EncGrp> &enc_groups, b
         ++numSelected;
 
         enc_gi = encode_sel(gi, !groups.is_lev_select(gi));
-        if (groups.is_lev_select(gi))
-        {
+        if (levs.level_type(qlev+1)==RANDOM){ // next level is RANDOM with threshold
             enc_groups.push_back(enc_gi);
-            continue;
         }
-        const vector<size_t> &children = groups.get_children(gi);
-        for (size_t gc : children)
-        {
-            if (groups.is_lev_select(gc))
+        else{
+            if (groups.is_lev_select(gi))
             {
                 enc_groups.push_back(enc_gi);
-                break;
+                continue;
+            }
+            const vector<size_t> &children = groups.get_children(gi);
+            for (size_t gc : children)
+            {
+                if (groups.is_lev_select(gc))
+                {
+                    enc_groups.push_back(enc_gi);
+                    break;
+                }
             }
         }
     }
@@ -1064,20 +1082,17 @@ void QestoGroups::output_ssat_sol(bool interrupted)
     printf("\n");
 }
 
+/*********************************************************/
 /************* Incremental Model Counting ****************/
+/*********************************************************/
 
 void QestoGroups::to_last_level_random_dimacs(FILE *f)
 {
     size_t cnt = 0;
     Var max = 1;
     vec<bool> encoded_group;
-    bool selected;
 
     size_t last_lev = levs.lev_count() - 1;
-
-    // for (size_t gi : groups.groups(qlev))
-    //                 if ( qlev == 0 || groups.is_select(groups.parent(gi)) )
-    //                     enc_sel_lits.push_back( vector<EncGrp>({encode_sel(gi, 0)}) );
 
     for (size_t gi : groups.groups(last_lev))
     {
@@ -1095,33 +1110,8 @@ void QestoGroups::to_last_level_random_dimacs(FILE *f)
 
     fprintf(f, "p cnf %d %ld\n", max - 1, cnt);
 
-    // for (const vector<EncGrp> &enc_groups : enc_learnts)
-    // {
-    //     if (enc_groups.empty())
-    //     {
-    //         fprintf(f, "p cnf 1 2\n1 0\n-1 0\n");
-    //         fclose(f);
-    //         return;
-    //     }
-    //     cnt += 1;
-    //     for (EncGrp enc_gi : enc_groups)
-    //     {
-    //         gi = get_group(enc_gi);
 
-    //         if (!check_and_encode(encoded_group, gi))
-    //         {
-    //             const LitSet &ls = groups.lits(gi);
-    //             cnt += ls.size() + 1;
-    //             // Map vars to 0 ~ max
-    //             FOR_EACH(li, ls)
-    //             mapVar(var(*li), map, max);
-    //             mapVar(t(qlev, gi), map, max);
-    //         }
-    //     }
-    // }
-
-    
-
+    // write selection relation
     for (int gi = 0; gi < encoded_group.size(); ++gi)
     {
         if (encoded_group[gi])
@@ -1135,29 +1125,96 @@ void QestoGroups::to_last_level_random_dimacs(FILE *f)
             fprintf(f, "%d 0\n", last_level_map[tvar]);
         }
     }
-
-    // FILE* f_w = fopen(LAST_LEVEL_WEIGHT, "w");
-    // const vector<double> &probs = levs.get_probs();
-    // for (size_t i = 0, n = last_level_map.size(); i < n; ++i)
-    // {
-    //     if (last_level_map[i] == -1)
-    //         continue;
-    //     assert(i >= probs.size() || probs[i] != -1);
-    //     if ( i < probs.size() ){
-    //         fprintf(f_w, "w %d %f\n" ,last_level_map[i], probs[i]  );
-    //         fprintf(f_w, "w -%d %f\n",last_level_map[i], 1-probs[i]);
-    //     }
-    // }
-    // fclose(f_w);
 }
 
-void QestoGroups::compile_cnf_to_nnf()
+void QestoGroups::to_dimacs_cnf(FILE* f, size_t qlev, const ProbMap& prob2Learnt, vec<Var>& map, size_t& en_var_offset)
 {
-    //TODO compile cnf to dnnf to LAST_LEVEL_NNF using d4
-    int length = 1024;
-    char prob_str[length], cmd[length];
-    sprintf(cmd, "%s %s -out=%s",dDNNF_COMPILER, LAST_LEVEL_CNF, LAST_LEVEL_NNF);
-    // cout << cmd << endl;
+    size_t cls_cnt = 0, gi, en_var_cnt = 0;
+    Var max = 1;
+    vec<bool> encoded_group;
+    bool selected;
+
+    // map grp/var id to variable in cnf
+    for(auto it : prob2Learnt)
+    {
+        en_var_cnt += 1;
+        for (const vector<EncGrp> &enc_groups : it.second)
+        {
+            if (enc_groups.empty())
+            {
+                fprintf(f, "p cnf 1 2\n1 0\n-1 0\n");
+                return;
+            }
+            cls_cnt += 1;
+            for (EncGrp enc_gi : enc_groups)
+            {
+                gi = get_group(enc_gi);
+
+                if (!check_and_encode(encoded_group, gi))
+                {
+                    const LitSet &ls = groups.lits(gi);
+                    cls_cnt += ls.size() + 1;
+                    // Map vars to 0 ~ max
+                    FOR_EACH(li, ls)
+                    mapVar(var(*li), map, max);
+                    mapVar(t(qlev, gi), map, max);
+                }
+            }
+        }
+    }
+
+    en_var_cnt = prob2Learnt.size(); // enable variable count
+    en_var_offset = max;             // enavle variable offset
+    // map enable variable
+    for(size_t i=0; i<en_var_cnt; ++i)
+        mapVar(i+en_var_offset, map, max);
+
+    fprintf(f, "p cnf %d %ld\n", max - 1, cls_cnt);
+
+    // write selection relation
+    for (int gi = 0; gi < encoded_group.size(); ++gi)
+    {
+        if (encoded_group[gi])
+        {
+            const LitSet &ls = groups.lits(gi);
+            Var tvar = t(qlev, gi);
+            FOR_EACH(li, ls)
+            fprintf(f, "-%d %s%d 0\n", map[tvar], sign(*li) ? "" : "-", map[var(*li)]);
+            FOR_EACH(li, ls)
+            fprintf(f, "%s%d ", sign(*li) ? "-" : "", map[var(*li)]);
+            fprintf(f, "%d 0\n", map[tvar]);
+        }
+    }
+
+    size_t en_var_id = 0;
+    // write learnt clause with enable variable
+    for(auto it : prob2Learnt)
+    {
+        for (const vector<EncGrp> &enc_groups : it.second)
+        {
+            fprintf(f, "-%d ", en_var_id+en_var_offset);
+            for (EncGrp enc_gi : enc_groups)
+            {
+                gi = get_group(enc_gi);
+                selected = get_select(enc_gi);
+                Var tvar = t(qlev, gi);
+                fprintf(f, "%s%d ", selected ? "" : "-", map[tvar]);
+            }
+            fprintf(f, "0\n");
+        }
+        en_var_id ++;
+    }
+
+}
+
+void QestoGroups::compile_cnf_to_nnf(bool last_lev=false)
+{
+    // compile cnf to dnnf to LAST_LEVEL_NNF using d4
+    char cmd[1024];
+    if(last_lev) // last level
+        sprintf(cmd, "%s %s -out=%s",dDNNF_COMPILER, LAST_LEVEL_CNF, LAST_LEVEL_NNF);
+    else
+        sprintf(cmd, "%s %s -out=%s > %s",dDNNF_COMPILER, CNF_FILE, NNF_FILE, SATPROB_FILE);
     system(cmd);
 }
 
@@ -1169,17 +1226,20 @@ double QestoGroups::assump_last_level_wmc(const vector<vector<EncGrp>> &enc_lear
         FILE *f_cnf = fopen(LAST_LEVEL_CNF, "w");
         to_last_level_random_dimacs(f_cnf);
         fclose(f_cnf);
-        compile_cnf_to_nnf();
-        //TODO ifstream f_nnf(LAST_LEVEL_NNF) 
-        //  last_level_counter = DNNFCounter(f_nnf)
+
+        compile_cnf_to_nnf(true); // last level compile
+
         ifstream f_nnf(LAST_LEVEL_NNF);
-        const vector<double> &probs = levs.get_probs();
         last_level_counter = DNNFCounter(f_nnf);
+        f_nnf.close();
+
+        // set weights
+        const vector<double> &probs = levs.get_probs();
         for (size_t i = 0, n = last_level_map.size(); i < n; ++i)
         {
             if (last_level_map[i] == -1)
                 continue;
-            assert(i >= probs.size() || probs[i] != -1);
+            //assert(i >= probs.size() || probs[i] != -1);
             if ( i < probs.size() )
                 last_level_counter.set_lit_weight(last_level_map[i], probs[i]);
         }
@@ -1188,7 +1248,6 @@ double QestoGroups::assump_last_level_wmc(const vector<vector<EncGrp>> &enc_lear
     size_t last_level = levs.lev_count()-1;
     vector<int> assumps(enc_learnts.size(), 0);
     size_t idx = 0;
-    cout << "level map size: " << last_level_map.size() << endl;
     for (const vector<EncGrp> &enc_groups : enc_learnts)
     {
         if (enc_groups.empty())
@@ -1197,22 +1256,83 @@ double QestoGroups::assump_last_level_wmc(const vector<vector<EncGrp>> &enc_lear
         }
         assert(enc_groups.size()==1);
         size_t gi = get_group(enc_groups[0]);
-        // cout << "id " << idx << endl;
-        // cout << "t "  <<  t(last_level, gi) << endl;
         assumps[idx] = -last_level_map[t(last_level, gi)] ;
         ++idx;
-        // for (EncGrp enc_gi : enc_groups)
-        // {
-        //     size_t gi = get_group(enc_gi);
-
-
-        //     mapVar(t(qlev, gi), map, max);
-        //     }
-        // }
     }
 
     return last_level_counter.assump_model_count(assumps);
 }
+
+double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt, bool has_thres, double thres)
+{
+
+    // write cnf
+    FILE* f_cnf = fopen(CNF_FILE, "w");
+    vec<Var> map;
+    size_t en_var_offset;
+    profiler.set_WMCIO_time();
+    to_dimacs_cnf(f_cnf, qlev, prob2Learnt, map, en_var_offset);
+    profiler.accum_WMCIO_time();
+    fclose(f_cnf);
+
+    // compile cnf
+    profiler.set_WMC_time();
+    compile_cnf_to_nnf(false);
+    profiler.accum_WMC_time();
+
+    // successive incremental model count
+
+    ifstream f_nnf(NNF_FILE);
+    if( is_file_empty(f_nnf) ) // unsat formula
+        return 1;
+    DNNFCounter model_counter(f_nnf);
+    f_nnf.close();
+
+    // set weight
+    const vector<double> &probs = levs.get_probs();
+    for (size_t i=0; i<en_var_offset; ++i){
+        if (map[i] == -1)
+            continue;
+        //assert(i >= probs.size() || probs[i] != -1);
+        if ( i < probs.size() )
+            model_counter.set_lit_weight(map[i], probs[i]);
+    }
+
+    double accum = 0, sel_prob, left = 1; // accum <= ret <= accum+left
+    vector<int> assumps(prob2Learnt.size());
+    std::iota( std::begin(assumps), std::end(assumps), -(int)prob2Learnt.size()-en_var_offset+1 );
+
+    size_t en_var_id = 0;
+    for (auto it : prob2Learnt)
+    {   
+        assert(accum >= 0 && it.first >= 0 && left >= 0);
+        if ( it.first == 0)
+            continue;
+        if (accum + it.first * left < get_ret_prob((int)qlev - 1))
+            return -1;
+
+        *(assumps.end()-1) = -assumps.back();
+        sel_prob = 1 - model_counter.assump_model_count(assumps);
+        model_counter.condition_on( vector<int>{ -assumps.back() } );
+        assert(sel_prob >= 0 && sel_prob <= 1);
+        assumps.pop_back();
+
+        accum += it.first * sel_prob;
+        left -= sel_prob;
+        en_var_id ++;
+
+        if(has_thres){
+            if(accum >= thres)
+                return accum;
+            if(accum+left < thres)
+                return accum+left;
+        }
+    }
+    assert(assumps.size()==0);
+
+    return accum;
+}
+
 
 bool check_and_encode(vec<bool> &encoded, Var v)
 {
@@ -1251,4 +1371,8 @@ void print_encgrps(const vector<EncGrp> &enc_groups)
     for (EncGrp enc_gi : enc_groups)
         cout << get_group(enc_gi) << (get_select(enc_gi) ? "" : "\'") << ' ';
     cout << ")";
+}
+
+bool is_file_empty(std::ifstream& f){
+    return f.peek() == std::ifstream::traits_type::eof();
 }

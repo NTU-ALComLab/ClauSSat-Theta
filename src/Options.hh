@@ -42,7 +42,7 @@ bool parse(int argc,char **argv);
   int                         get_cache() const { return cache ;}
   int                         get_partial() const { return partial ;}
   int                         get_dynamic() const { return dynamic ;}
-  int                         get_increMC() const { return increMC;}
+  int                         get_increMC() const { return increMC ;}
   friend std::ostream& operator << (std::ostream& out, const Options& opt);
 private:
   std::vector<string> rest;
@@ -61,6 +61,6 @@ private:
   int cache ;
   int partial ;
   int dynamic ;
-  int increMC;
+  int increMC ;
 };
 #endif

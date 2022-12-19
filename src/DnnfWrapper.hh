@@ -1,3 +1,6 @@
+#ifndef DNNFWRAPPER_HH
+#define DNNFWRAPPER_HH
+
 #include <algorithm>
 #include "prompt.hh"
 #include "parser.hh"
@@ -36,3 +39,5 @@ public:
 private:
     Graph           dnnf_;
 };
+
+#endif
