@@ -5,6 +5,7 @@
  * Copyright (C) 2014, Mikolas Janota
  */
 #include <signal.h>
+#include "dirent.h"
 #include "ReadQ.hh"
 #include "Options.hh"
 #include "QestoGroups.hh"
@@ -18,6 +19,22 @@ Options options;
 Profiler profiler(options);
 
 
+int isDirectoryEmpty(char *dirname) {
+  int n = 0;
+  struct dirent *d;
+  DIR *dir = opendir(dirname);
+  if (dir == NULL) //Not a directory or doesn't exist
+    return 1;
+  while ((d = readdir(dir)) != NULL) {
+    if(++n > 2)
+      break;
+  }
+  closedir(dir);
+  if (n <= 2) //Directory Empty
+    return 1;
+  else
+    return 0;
+}
 
 int main(int argc, char** argv) {
 	signal(SIGHUP, SIG_handler);
@@ -127,7 +144,8 @@ int main(int argc, char** argv) {
         cout << (options.get_pin()? "CUED\t" : "QESTO\t") << (r?"SAT  ":"UNSAT") << "\t" << read_cpu_time() << endl;
     }
     else {
-		system("rm wmc/*");
+		if(!isDirectoryEmpty("wmc"))
+			system("rm wmc/*");
         gps->solve_ssat(rq.unsatisfy);
         gps->output_ssat_sol();
         cout << profiler << endl;

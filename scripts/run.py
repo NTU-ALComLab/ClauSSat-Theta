@@ -6,8 +6,8 @@ timeLim = '1000s'
 TIME = '/usr/bin/time -v'
 TIMEOUT = 'timeout {}'.format(timeLim)
 
-SOLVER = 'qesto'
-EXEC = './qesto -uwsc'
+SOLVER = 'claussat'
+EXEC = './claussat -uwsci'
 FORM = 'sdimacs'
 
 LOG_DIR = 'logs/'

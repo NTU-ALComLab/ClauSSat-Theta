@@ -29,19 +29,31 @@ struct Profiler
     pushUNSATCoreAttempt(0),
     pushUNSATCoreSuccess(0),
     accSATTime(0),
-    accWMCTime(0)
+    accWMCTime(0),
+    accMCQueryTime(0),
+    accMCSimpTime(0)
     {
         prgm_start = high_resolution_clock::now();
     }
 
     inline void set_SAT_time() { sat_start = high_resolution_clock::now(); }
     inline void accum_SAT_time() { accSATTime += time_elapsed(sat_start); }
+
     inline void set_WMC_time() { wmc_start = high_resolution_clock::now(); }
     inline void accum_WMC_time() { accWMCTime += time_elapsed(wmc_start); }
+
     inline void set_WMCIO_time() {wmcio_start = high_resolution_clock::now();}
     inline void accum_WMCIO_time() { accWMCIOTime += time_elapsed(wmcio_start); }
+
+    inline void set_MCQ_time() { mcq_start = high_resolution_clock::now(); }
+    inline void accum_MCQ_time() { accMCQueryTime += time_elapsed(mcq_start); }
+
+    inline void set_MCS_time() { mcs_start = high_resolution_clock::now(); }
+    inline void accum_MCS_time() { accMCSimpTime += time_elapsed(mcs_start); }
+
     inline double get_tot_time() const { return time_elapsed(prgm_start); }
     inline bool is_timeout() const { return get_tot_time() > TIME_LIMIT; }
+
     inline double time_elapsed(high_resolution_clock::time_point t) const 
     { return (high_resolution_clock::now() - t).count() * 1e-9; }
 
@@ -100,6 +112,8 @@ struct Profiler
            << "  > Time consumed on SAT       = " << p.accSATTime << '\n'
            << "  > Time consumed on WMC       = " << p.accWMCTime << '\n'
            << "  > Time consumed on WMC IO    = " << p.accWMCIOTime << '\n'
+           << "  > Time consumed on WMC Query = " << p.accMCQueryTime << '\n'
+           << "  > Time consumed on WMC Simp  = " << p.accMCSimpTime << '\n'
            << "  > Total time consumed        = " << p.get_tot_time() << '\n';
         return os;
     }
@@ -111,6 +125,8 @@ struct Profiler
     high_resolution_clock::time_point sat_start;
     high_resolution_clock::time_point wmc_start;
     high_resolution_clock::time_point wmcio_start;
+    high_resolution_clock::time_point mcq_start;
+    high_resolution_clock::time_point mcs_start;
     std::vector<size_t> selSATCnts;
     std::vector<size_t> selUNSATCnts;
     std::vector<size_t> dropCnts;
@@ -133,6 +149,8 @@ struct Profiler
     double      accSATTime;
     double      accWMCTime;
     double      accWMCIOTime;
+    double      accMCQueryTime;
+    double      accMCSimpTime;
 };
 
 #endif
