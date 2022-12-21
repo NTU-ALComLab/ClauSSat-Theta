@@ -10,8 +10,8 @@ using namespace std;
 
 class DNNFCounter{
 public:
-    DNNFCounter (std::istream& in): dnnf_(parseNNF(in)){}
-    DNNFCounter () {};
+    DNNFCounter (std::istream& in): dnnf_(parseNNF(in)), created_(true){}
+    DNNFCounter (): created_(false) {};
 
     void set_lit_weight(int lit, double weight){
         dnnf_.setLitWeight(lit, weight);
@@ -36,8 +36,11 @@ public:
         return dnnf_.nbVars;
     }
 
+    bool is_created(){ return created_; }
+
 private:
     Graph           dnnf_;
+    bool            created_;
 };
 
 #endif

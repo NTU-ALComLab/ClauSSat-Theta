@@ -21,6 +21,7 @@ struct Profiler
     pruneClaCnt(0),
     pruneCnt(0),
     WMCCnt(0),
+    AssumpMCCnt(0),
     cacheLookup(0),
     cacheHits(0),
     partialWMC(0),
@@ -87,6 +88,7 @@ struct Profiler
            << "  > # of MCS2 solving (SAT)    = " << p.MCS2SuccCnt << '\n'
            << "  > # of MCS2 solving (UNSAT)  = " << p.MCS2FailCnt << '\n'
            << "  > # of calls to WMC          = " << p.WMCCnt << '\n'
+           << "  > # of calls to AssumpWMC    = " << p.AssumpMCCnt << '\n'
            << "  > # of partial WMC           = " << p.partialWMC << '\n'
            << "  > Avg. # of pruned clause    = " << (p.pruneCnt? (float)p.pruneClaCnt / p.pruneCnt : 0) << " (" << p.pruneClaCnt << "/" << p.pruneCnt << ")" << '\n'
            << "  > Avg. length of learnt      = " << (float)p.learntClaLen / p.learntClaNum << " (" << p.learntClaLen << "/" << p.learntClaNum << ")" << '\n'
@@ -146,6 +148,7 @@ struct Profiler
     size_t      learntClaNum;
     size_t      pushUNSATCoreAttempt;
     size_t      pushUNSATCoreSuccess;
+    size_t      AssumpMCCnt;
     double      accSATTime;
     double      accWMCTime;
     double      accWMCIOTime;

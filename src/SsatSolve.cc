@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <cassert>
 #include <numeric>
+#include <string>
 #include "QestoGroups.hh"
 #include "ClausesInversion.hh"
 #include "LitBitSet.hh"
@@ -15,14 +16,16 @@ using SATSPC::vec;
 #define CNF_FILE  "wmc/temp.cnf"
 #define LOG_FILE "wmc/temp.log"
 #define SATPROB_FILE "wmc/satProb.log"
-#define LAST_LEVEL_CNF "wmc/last.cnf"
-#define LAST_LEVEL_NNF "wmc/last.nnf"
-#define LAST_LEVEL_WEIGHT "wmc/last.weight"
+#define LEVEL_CNF "wmc/level.cnf"
+#define LEVEL_NNF "wmc/level.nnf"
 #define dDNNF_COMPILER "bin/d4"
+
+// using namespace std;
 
 /* Helper functions */
 bool check_and_encode(vec<bool> &encoded, Var v);
 Var mapVar(Var v, vec<Var> &map, Var &max);
+Var mapVar(Var v, vector<Var>& map, Var& max);
 void concat_assumptions(vec<Lit> &concat, vec<Lit> &assump1, vec<Lit> &assump2);
 void print_encgrps(const vector<EncGrp> &enc_groups);
 bool is_file_empty(ifstream& f);
@@ -101,7 +104,7 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                     if (qlev == 0 || groups.is_select(groups.parent(gi)))
                         enc_sel_lits.push_back(vector<EncGrp>({encode_sel(gi, 0)}));
                 if (opt.get_increMC())
-                    ret = assump_last_level_wmc(enc_sel_lits);
+                    ret = assump_level_wmc(qlev, enc_sel_lits);
                 else
                     ret = selection_WMC(qlev, enc_sel_lits);
             }
@@ -211,7 +214,8 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                 if (opt.get_partial())
                     partial_assignment_pruning(qlev, enc_groups, prob);
                 // Record mapping from 'prob' to 'learnt clause'
-                prob2Learnts[qlev][prob].push_back(enc_groups);
+                if(prob!=0)
+                    prob2Learnts[qlev][prob].push_back(enc_groups);
 #ifndef NDEBUG
                 cout << getSolverName(qlev) << " store " << prob << " -> ";
                 print_encgrps(enc_groups);
@@ -225,15 +229,23 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
             else
             {
                 // TODO incremental
-                if(opt.get_increMC()){
-                    ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
-                    // double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
-                    // cout << "imp / ref = " << ret << " / " << ref  << endl;
+
+                if(!prob2Learnts[qlev].empty()){
+                    if(opt.get_increMC()){
+                        ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
+                        double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                        // cout << "ref / imp = " << ref << " / " << ret << endl;
+                        // cout << "qlev = " << qlev << endl;
+                        if(ref != ret){
+                            cout << "Warning!! Error Probability" << endl;
+                            // exit(1);
+                        }
+                    }
+                    else{
+                        ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                    }
+                    prob2Learnts[qlev].clear();
                 }
-                else{
-                    ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
-                }
-                prob2Learnts[qlev].clear();
                 break;
             }
         }
@@ -852,9 +864,9 @@ void QestoGroups::mini_unsat_core(size_t qlev)
 
 std::pair<double, double> QestoGroups::calculate_prob(size_t qlev, const ProbMap &prob2Learnt, bool countZero)
 {
-    // TODO Incrmental
-    if (qlev == 0)
-        cout << "Final count, # of WMC = " << prob2Learnt.size() << endl;
+
+    // if (qlev == 0)
+    //     cout << "Final count, # of WMC = " << prob2Learnt.size() << endl;
     double accum = 0, sel_prob, left = 1;
     for (auto it : prob2Learnt)
     {
@@ -1086,16 +1098,18 @@ void QestoGroups::output_ssat_sol(bool interrupted)
 /************* Incremental Model Counting ****************/
 /*********************************************************/
 
-void QestoGroups::to_last_level_random_dimacs(FILE *f)
+// build selection relation into cnf without enable variables
+void QestoGroups::to_dimacs(FILE *f, size_t qlev)
 {
-    // cout << "Writing Last CNF ..." << endl;
+
     size_t cnt = 0;
     Var max = 1;
     vec<bool> encoded_group;
 
-    size_t last_lev = levs.lev_count() - 1;
+    vector<Var>& map = level_map[qlev];
+    bool is_last = qlev==(levs.lev_count()-1);
 
-    for (size_t gi : groups.groups(last_lev))
+    for (size_t gi : groups.groups(qlev))
     {
         if (!check_and_encode(encoded_group, gi)){
             {
@@ -1103,11 +1117,12 @@ void QestoGroups::to_last_level_random_dimacs(FILE *f)
                 cnt += ls.size() + 1;
                 // Map vars to 0 ~ max
                 FOR_EACH(li, ls)
-                mapVar(var(*li), last_level_map, max);
-                mapVar(t(last_lev, gi), last_level_map, max);
+                mapVar(var(*li), map, max);
+                mapVar(t(qlev, gi), map, max);
             }
         }
     }
+    level_maxV[qlev] = max-1;
 
     fprintf(f, "p cnf %d %ld\n", max - 1, cnt);
 
@@ -1118,17 +1133,20 @@ void QestoGroups::to_last_level_random_dimacs(FILE *f)
         if (encoded_group[gi])
         {
             const LitSet &ls = groups.lits(gi);
-            Var tvar = t(last_lev, gi);
+            Var tvar = t(qlev, gi);
+
             FOR_EACH(li, ls)
-            fprintf(f, "-%d %s%d 0\n", last_level_map[tvar], sign(*li) ? "" : "-", last_level_map[var(*li)]);
+            fprintf(f, "-%d %s%d 0\n", map[tvar], sign(*li) ? "" : "-", map[var(*li)]);
             FOR_EACH(li, ls)
-            fprintf(f, "%s%d ", sign(*li) ? "-" : "", last_level_map[var(*li)]);
-            fprintf(f, "%d 0\n", last_level_map[tvar]);
+            fprintf(f, "%s%d ", sign(*li) ? "-" : "", map[var(*li)]);
+            fprintf(f, "%d 0\n", map[tvar]);
         }
     }
 }
 
-void QestoGroups::to_dimacs_cnf(FILE* f, size_t qlev, const ProbMap& prob2Learnt, vec<Var>& map, size_t& en_var_offset)
+
+// build cnf with enable variables
+void QestoGroups::to_dimacs_cnf_en(FILE* f, size_t qlev, const ProbMap& prob2Learnt, vec<Var>& map, size_t& en_var_offset)
 {
     // cout << "Writing cnf file ..." << endl;
     size_t cls_cnt = 0, gi, en_var_cnt = 0;
@@ -1211,155 +1229,242 @@ void QestoGroups::to_dimacs_cnf(FILE* f, size_t qlev, const ProbMap& prob2Learnt
 
 }
 
-void QestoGroups::compile_cnf_to_nnf(bool last_lev=false)
+//TODO compile cnf w/wo enable variable
+void QestoGroups::compile_cnf_to_nnf(size_t qlev, bool en)
 {
     // compile cnf to dnnf to LAST_LEVEL_NNF using d4
     // cout << "Compiling cnf to nnf ..." << endl;
+    profiler.set_WMC_time();
     char cmd[1024];
-    if(last_lev) // last level
-        sprintf(cmd, "%s %s -out=%s",dDNNF_COMPILER, LAST_LEVEL_CNF, LAST_LEVEL_NNF);
+    if(!en) // last level
+        sprintf(cmd, "%s %s.%d -out=%s.%d",dDNNF_COMPILER, LEVEL_CNF, qlev, LEVEL_NNF, qlev);
     else
         sprintf(cmd, "%s %s -out=%s > %s",dDNNF_COMPILER, CNF_FILE, NNF_FILE, SATPROB_FILE);
     system(cmd);
+    profiler.accum_WMC_time();
     // cout << "After calling d4 ..." << endl;
 }
 
-double QestoGroups::assump_last_level_wmc(const vector<vector<EncGrp>> &enc_learnts)
+// assumption based WMC, without enable variables
+double QestoGroups::assump_level_wmc(size_t qlev, const vector<vector<EncGrp>> &enc_learnts)
 {
-    // cout << "Assump last level MC ..." << endl;
+    // cout << "Assump level MC ..." << endl;
     profiler.WMCCnt++;
-    if (access(LAST_LEVEL_NNF, F_OK) != 0)
+    profiler.AssumpMCCnt++;
+    DNNFCounter& counter = level_counter[qlev];
+    vector<Var>& map = level_map[qlev];
+
+    //FIXME add previous level selection into assumption, if !last_lev
+    bool is_last_lev = (qlev == (levs.lev_count()-1));
+
+    if (!counter.is_created())
     {
-        // file doesn't exist
-        FILE *f_cnf = fopen(LAST_LEVEL_CNF, "w");
-        to_last_level_random_dimacs(f_cnf);
+        // counter not yet created
+        // cout << "Created??" << endl;
+        string level_cnf_file = LEVEL_CNF, level_nnf_file = LEVEL_NNF;
+        level_cnf_file.append(".").append(to_string(qlev));
+        level_nnf_file.append(".").append(to_string(qlev));
+        FILE *f_cnf = fopen(level_cnf_file.c_str(), "w");
+        to_dimacs(f_cnf, qlev);
         fclose(f_cnf);
 
-        compile_cnf_to_nnf(true); // last level compile
+        compile_cnf_to_nnf(qlev); // level compile
 
-        ifstream f_nnf(LAST_LEVEL_NNF);
-        last_level_counter = DNNFCounter(f_nnf);
+        ifstream f_nnf(level_nnf_file.c_str());
+        counter = DNNFCounter(f_nnf);
         f_nnf.close();
 
         // set weights
         const vector<double> &probs = levs.get_probs();
-        for (size_t i = 0, n = last_level_map.size(); i < n; ++i)
+        for (size_t i = 0; i < map.size(); ++i)
         {
-            if (last_level_map[i] == -1)
+            if (map[i] == -1 ){
+                if(i <= level_maxV[qlev])
+                    counter.set_lit_weight(i, 0);
                 continue;
+            }
             //assert(i >= probs.size() || probs[i] != -1);
-            if ( i < probs.size() )
-                last_level_counter.set_lit_weight(last_level_map[i], probs[i]);
+            if ( i < probs.size() ){
+                counter.set_lit_weight(map[i], probs[i]);
+            }
         }
-    }
-    
-    size_t last_level = levs.lev_count()-1;
-    vector<int> assumps(enc_learnts.size(), 0);
-    size_t idx = 0;
-    for (const vector<EncGrp> &enc_groups : enc_learnts)
-    {
-        if (enc_groups.empty())
-        {
-            return 0;
-        }
-        assert(enc_groups.size()==1);
-        size_t gi = get_group(enc_groups[0]);
-        assumps[idx] = -last_level_map[t(last_level, gi)] ;
-        ++idx;
     }
 
-    return last_level_counter.assump_model_count(assumps);
+
+    vector<int> assumps;
+    if(is_last_lev){
+        // cout << "Last Level???" << endl;
+        assumps.resize(enc_learnts.size());
+        size_t idx = 0;
+        for (const vector<EncGrp> &enc_groups : enc_learnts)
+        {
+            if (enc_groups.empty())
+            {
+                return 0;
+            }
+            assert(enc_groups.size()==1);
+            size_t gi = get_group(enc_groups[0]);
+            assumps[idx] = -map[t(qlev, gi)] ;
+            ++idx;
+        }
+    }
+    else{
+        // cout << "Assump???" << enc_learnts.size() << endl;
+        assert(enc_learnts.size()==1);
+        vector<EncGrp> enc_groups;
+        // for(auto gi : enc_learnts[0]){
+        //     enc_groups.push_back(gi) ;
+        //     cout << gi << endl;
+        // }
+
+        enc_groups = enc_learnts[0];
+        if(enc_groups.empty()) return 0;
+
+        assumps.resize(enc_groups.size());
+        for(size_t idx=0; idx<enc_groups.size(); ++idx){
+            // cout << "mep1" << endl;
+            size_t gi = get_group(enc_groups[idx]);
+            // cout << "mep2" << endl;
+            assumps[idx] =  get_select(enc_groups[idx]) ? -map[t(qlev, gi)] : map[t(qlev, gi)];
+            // cout << "Assume " << assumps[idx] << endl;
+        }
+    }
+    return counter.assump_model_count(assumps);
+    
 }
 
 double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt, bool has_thres, double thres)
 {
 
-    // write cnf
-    FILE* f_cnf = fopen(CNF_FILE, "w");
-    vec<Var> map;
-    size_t en_var_offset;
-    profiler.set_WMCIO_time();
-    to_dimacs_cnf(f_cnf, qlev, prob2Learnt, map, en_var_offset);
-    profiler.accum_WMCIO_time();
-    fclose(f_cnf);
-
-
-    // compile cnf
-    profiler.set_WMC_time();
-    compile_cnf_to_nnf(false);
-    profiler.accum_WMC_time();
-
-    // successive incremental model count
-
-    ifstream f_nnf(NNF_FILE);
-    if( is_file_empty(f_nnf) ) // unsat formula
-        return 1;
-    DNNFCounter model_counter(f_nnf);
-    f_nnf.close();
-
-    // cout << "* Enable Var Offset " << en_var_offset <<endl;
-
-    const vector<double> &probs = levs.get_probs();
-    // set random weights
-    for (size_t i=0; i<en_var_offset; ++i){
-        if (map[i] == -1)
-            continue;
-        //assert(i >= probs.size() || probs[i] != -1);
-        if ( i < probs.size() ){
-            assert(levs.type(i)==RANDOM);
-            model_counter.set_lit_weight(map[i], probs[i]);  
-        }      
+    // TODO seperate learntSize=1 and learntSize!=1 into 2 prob2Learnt map: pmap1 and pmap2
+    //      apply increMC w.  enable on pmap2 if pmap2.size()>=2
+    //      apply increMC wo. enable on pmap2 , O.W.
+    //      apply increMC wo. enable on pmap1
+    ProbMap pmap1, pmap2;
+    for(auto it : prob2Learnt){
+        if(it.second.size()==1)
+            pmap1[it.first] = it.second; // learnts size==1
+        else
+            pmap2[it.first] = it.second; // learnts size>1
     }
 
 
-    // cout << "Inter level assump MC ..." << endl;
     double accum = 0, sel_prob, left = 1; // accum <= ret <= accum+left
-    vector<int> assumps(prob2Learnt.size());
-    //std::iota( std::begin(assumps), std::end(assumps), -(int)prob2Learnt.size()-en_var_offset+1 );
 
-    for(size_t i=0; i<assumps.size(); ++i){
-        // cout << "Ind Var " << (map.size()-1)-i << endl;
-        assumps[i] = -map[ (map.size()-1)-i];
-    }
+    // cout << "Incremental MC at lev" << qlev << " size1 / size2 = " << pmap1.size() << " / " << pmap2.size() << endl;
 
-    size_t en_var_id = 0;
-    for (auto it : prob2Learnt)
+    // pmap1 incremental(assump) Model counting
+    // TODO
+    for (auto it : pmap1)
     {   
-        assert(accum >= 0 && it.first >= 0 && left >= 0);
+        //assert(accum >= 0 && it.first >= 0 && left >= 0);
         if ( it.first == 0)
             continue;
-        if (accum + it.first * left < get_ret_prob((int)qlev - 1))
-            return -1;
-        // cout << "learnt " << en_var_id << endl;
-        profiler.WMCCnt++;
-        //*(assumps.end()-1) = -assumps.back();
-        //size_t idx = prob2Learnt.size()-1-en_var_id;
-        *(assumps.end()-1) = -assumps.back(); // enable the corresponding learnt clause
-        profiler.set_MCQ_time();
-        double p = model_counter.assump_model_count(assumps);
-        profiler.accum_MCQ_time();
-        //assumps[idx] = -assumps[idx]; // disable the corresponding learnt clause
+        // if (accum + it.first * left < get_ret_prob((int)qlev - 1))
+        //     return -1;
+        assert(it.second.size()==1);
 
-        sel_prob = 1 - p;
+        // cout << "Where" << endl;
+        double p = assump_level_wmc(qlev, it.second);
+        sel_prob = p;
 
-        profiler.set_MCS_time();
-        model_counter.condition_on( vector<int>{ -assumps.back() } );
-        profiler.accum_MCS_time();
         assert(sel_prob >= 0 && sel_prob <= 1);
-        assumps.pop_back();
 
         accum += it.first * sel_prob;
         left -= sel_prob;
-        en_var_id ++;
 
-        if(has_thres){
-            if(accum >= thres)
-                return accum;
-            if(accum+left < thres)
-                return accum+left;
-        }
+        // if(has_thres){
+        //     if(accum >= thres)
+        //         return accum;
+        //     if(accum+left < thres)
+        //         return accum+left;
+        // }
     }
-    assert(assumps.size()==0);
+
+
+    // pmap2
+    if( pmap2.size() == 1){ // original Model Counting
+        accum += calculate_prob(qlev, pmap2).first;
+    }
+    else{                   // Incrmental Model Counting with enable variable
+        // write cnf
+        FILE* f_cnf = fopen(CNF_FILE, "w");
+        vec<Var> map;
+        size_t en_var_offset;
+        profiler.set_WMCIO_time();
+        to_dimacs_cnf_en(f_cnf, qlev, prob2Learnt, map, en_var_offset);
+        profiler.accum_WMCIO_time();
+        fclose(f_cnf);
+
+        // compile cnf
+        compile_cnf_to_nnf(qlev, true);
+
+        // successive incremental model count
+
+        ifstream f_nnf(NNF_FILE);
+        if( is_file_empty(f_nnf) ) // unsat formula
+            return 1;
+        DNNFCounter model_counter(f_nnf);
+        f_nnf.close();
+
+        const vector<double> &probs = levs.get_probs();
+
+        // cout << "Or Here" << endl;
+        // set random weights
+        for (size_t i=0; i<en_var_offset; ++i){
+            if (map[i] == -1)
+                continue;
+            //assert(i >= probs.size() || probs[i] != -1);
+            if ( i < probs.size() ){
+                assert(levs.type(i)==RANDOM);
+                model_counter.set_lit_weight(map[i], probs[i]);  
+            }      
+        }
+
+        vector<int> assumps(prob2Learnt.size());
+
+        for(size_t i=0; i<assumps.size(); ++i)
+            assumps[i] = -map[ (map.size()-1)-i];
+
+        size_t en_var_id = 0;
+        for (auto it : prob2Learnt)
+        {   
+            //assert(accum >= 0 && it.first >= 0 && left >= 0);
+            if ( it.first == 0)
+                continue;
+            if (accum + it.first * left < get_ret_prob((int)qlev - 1))
+                return -1;
+
+            profiler.WMCCnt++;
+            profiler.AssumpMCCnt++;
+
+            *(assumps.end()-1) = -assumps.back(); // enable the corresponding learnt clause
+            profiler.set_MCQ_time();
+            double p = model_counter.assump_model_count(assumps);
+            profiler.accum_MCQ_time();
+
+            sel_prob = 1 - p;
+
+            profiler.set_MCS_time();
+            model_counter.condition_on( vector<int>{ -assumps.back() } );
+            profiler.accum_MCS_time();
+            assert(sel_prob >= 0 && sel_prob <= 1);
+            assumps.pop_back();
+
+            accum += it.first * sel_prob;
+            left -= sel_prob;
+            en_var_id ++;
+
+            if(has_thres){
+                if(accum >= thres)
+                    return accum;
+                if(accum+left < thres)
+                    return accum+left;
+            }
+        }
+        assert(assumps.size()==0);
+    }
+
 
     return accum;
 }
@@ -1384,6 +1489,16 @@ Var mapVar(Var v, vec<Var> &map, Var &max)
         // cout << "Map " << v << " to " << max << endl;
         map[v] = max++;
     }
+    return map[v];
+}
+
+Var mapVar(Var v, vector<Var> &map, Var &max)
+{
+    if (map.size() <= v )
+    {
+        map.resize(v + 1, -1);
+    }
+    map[v] = max++;
     return map[v];
 }
 

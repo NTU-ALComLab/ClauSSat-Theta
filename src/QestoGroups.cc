@@ -73,6 +73,9 @@ void QestoGroups::init(){
         ret_prob.resize(levs.lev_count(), 0);
         prob2Learnts.resize(levs.lev_count());
         profiler.init(levs.lev_count());
+		level_counter.resize(levs.lev_count());
+		level_map.resize(levs.lev_count());
+		level_maxV.resize(levs.lev_count());
     }
 }
 

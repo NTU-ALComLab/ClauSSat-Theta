@@ -1,45 +1,474 @@
-c options: -g -u -w -s -c 
-benchmarks/ssatER/random/sdimacs/rand-4-20-60-10.21.sdimacs
-c nGroup/nPin/nEdge = 111/20/20
-Update solution, value = 0.0103548	(time = 0.0376276)
-Update solution, value = 0.0628062	(time = 0.0734741)
-Update solution, value = 0.0871776	(time = 1.4483)
-Update solution, value = 0.162411	(time = 1.93908)
-Update solution, value = 0.19909	(time = 2.43348)
-Update solution, value = 0.217094	(time = 2.50355)
-Update solution, value = 0.276504	(time = 3.61954)
-Update solution, value = 0.280898	(time = 3.68794)
-==== SSAT Final Result ====
-
-  > Exact solution
-  > Upper bound = 2.808980e-01
-  > Lower bound = 2.808980e-01
-  > Time        = 4.913614
-
-==== Solving Profiling ====
-
-  > # of sel solving on Lev 0  = 157 (156/1)
-  > # of sel solving on Lev 1  = 156 (141/15)
-
-  > # of sel solving           = 313
-  > # of sel solving (SAT)     = 297
-  > # of sel solving (UNSAT)   = 16
-  > # of MCS1 solving (SAT)    = 22
-  > # of MCS1 solving (UNSAT)  = 134
-  > # of MCS2 solving (SAT)    = 1
-  > # of MCS2 solving (UNSAT)  = 0
-  > # of calls to WMC          = 141
-  > # of partial WMC           = 0
-  > Avg. # of pruned clause    = 0 (0/0)
-  > Avg. length of learnt      = 10.5 (1638/156)
-  > Push UNSAT Core Succ rate  = -nan (0/0)
-  > Cache hit rate             = 0 (0/157)
-
-
-==== Runtime Profiling ====
-
-  > Time consumed on SAT       = 0.0268433
-  > Time consumed on WMC       = 4.16523
-  > Time consumed on WMC IO    = 0.715262
-  > Total time consumed        = 4.91366
-
+c options: -u -s -c -i 
+benchmarks/gttt_3x3/sdimacs/gttt_1_1_0010_3x3_w.sdimacs
+c nGroup/nPin/nEdge = 19564/2524/3110
+Assump level MC ...
+c WARNING: for repeatability, setting FPU to use double precision
+c Problem Statistics:
+c
+c [33mBenchmark Information[0m
+c Number of variables: 3306
+c Number of clauses: 208
+c Number of literals: 460
+c Parse time: 0.00
+c
+c [33md-DNNF Information[0m
+c Number of nodes: 511
+c Number of edges: 1022
+c 
+c Final time: 0.013006
+c 
+s 85070591730234615865843651857942052864
+ref / imp = 1 / 1
+qlev = 9
+Assump level MC ...
+c WARNING: for repeatability, setting FPU to use double precision
+c Problem Statistics:
+c
+c [33mBenchmark Information[0m
+c Number of variables: 2541
+c Number of clauses: 208
+c Number of literals: 460
+c Parse time: 0.00
+c
+c [33md-DNNF Information[0m
+c Number of nodes: 511
+c Number of edges: 1022
+c 
+c Final time: 0.011942
+c 
+s 85070591730234615865843651857942052864
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+c WARNING: for repeatability, setting FPU to use double precision
+c Problem Statistics:
+c
+c [33mBenchmark Information[0m
+c Number of variables: 1775
+c Number of clauses: 208
+c Number of literals: 460
+c Parse time: 0.00
+c
+c [33md-DNNF Information[0m
+c Number of nodes: 511
+c Number of edges: 1022
+c 
+c Final time: 0.014423
+c 
+s 85070591730234615865843651857942052864
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+c WARNING: for repeatability, setting FPU to use double precision
+c Problem Statistics:
+c
+c [33mBenchmark Information[0m
+c Number of variables: 1009
+c Number of clauses: 208
+c Number of literals: 460
+c Parse time: 0.00
+c
+c [33md-DNNF Information[0m
+c Number of nodes: 511
+c Number of edges: 1022
+c 
+c Final time: 0.008195
+c 
+s 85070591730234615865843651857942052864
+ref / imp = 1 / 1
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.957582 / 0.957582
+qlev = 9
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+ref / imp = 0.981819 / 0.981819
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 9
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99091 / 0.99091
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+ref / imp = 0.999679 / 0.999679
+qlev = 5
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+ref / imp = 0.972729 / 0.972729
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.987871 / 0.987871
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99984 / 0.99984
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.999759 / 0.999759
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.981819 / 0.981819
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99992 / 0.99992
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 7
+ref / imp = 0.99992 / 0.99992
+qlev = 5
+Assump level MC ...
+ref / imp = 1 / 1
+qlev = 5
+ref / imp = 0.987871 / 0.987871
+qlev = 3
+ref / imp = 0.975741 / 0.975741
+qlev = 3
+ref / imp = 0.957582 / 0.957582
+qlev = 9
+ref / imp = 0.957582 / 0.957582
+qlev = 9
+Assump level MC ...
+ref / imp = 0.981433 / 0.972729
+qlev = 7
+Warning!! Error Probability
