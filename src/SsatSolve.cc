@@ -233,13 +233,13 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                 if(!prob2Learnts[qlev].empty()){
                     if(opt.get_increMC()){
                         ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
-                        double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                        // double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
                         // cout << "ref / imp = " << ref << " / " << ret << endl;
                         // cout << "qlev = " << qlev << endl;
-                        if(ref != ret){
-                            cout << "Warning!! Error Probability" << endl;
+                        // if(ref != ret){
+                            // cout << "Warning!! Error Probability" << endl;
                             // exit(1);
-                        }
+                        // }
                     }
                     else{
                         ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
@@ -1237,9 +1237,9 @@ void QestoGroups::compile_cnf_to_nnf(size_t qlev, bool en)
     profiler.set_WMC_time();
     char cmd[1024];
     if(!en) // last level
-        sprintf(cmd, "%s %s.%d -out=%s.%d",dDNNF_COMPILER, LEVEL_CNF, qlev, LEVEL_NNF, qlev);
+        sprintf(cmd, "%s %s.%d -out=%s.%d > /dev/null",dDNNF_COMPILER, LEVEL_CNF, qlev, LEVEL_NNF, qlev);
     else
-        sprintf(cmd, "%s %s -out=%s > %s",dDNNF_COMPILER, CNF_FILE, NNF_FILE, SATPROB_FILE);
+        sprintf(cmd, "%s %s -out=%s > %s > /dev/null",dDNNF_COMPILER, CNF_FILE, NNF_FILE, SATPROB_FILE);
     system(cmd);
     profiler.accum_WMC_time();
     // cout << "After calling d4 ..." << endl;
@@ -1275,17 +1275,23 @@ double QestoGroups::assump_level_wmc(size_t qlev, const vector<vector<EncGrp>> &
         f_nnf.close();
 
         // set weights
+
         const vector<double> &probs = levs.get_probs();
+        // cout << "MaxV " << level_maxV[qlev] << endl;
         for (size_t i = 0; i < map.size(); ++i)
         {
+            //cout << i << " " << map[i] << endl;
             if (map[i] == -1 ){
-                if(i <= level_maxV[qlev])
-                    counter.set_lit_weight(i, 0);
+                if(i <= level_maxV[qlev]){ // unused variable
+                    //counter.set_lit_weight(i, 0);
+                    //cout << "Set Lit " << i << " weight " << 0 << endl;
+                }
                 continue;
             }
             //assert(i >= probs.size() || probs[i] != -1);
             if ( i < probs.size() ){
                 counter.set_lit_weight(map[i], probs[i]);
+                // cout << "Set Lit " << map[i] << " weight " << probs[i] << endl;
             }
         }
     }
@@ -1312,13 +1318,9 @@ double QestoGroups::assump_level_wmc(size_t qlev, const vector<vector<EncGrp>> &
         // cout << "Assump???" << enc_learnts.size() << endl;
         assert(enc_learnts.size()==1);
         vector<EncGrp> enc_groups;
-        // for(auto gi : enc_learnts[0]){
-        //     enc_groups.push_back(gi) ;
-        //     cout << gi << endl;
-        // }
 
         enc_groups = enc_learnts[0];
-        if(enc_groups.empty()) return 0;
+        if(enc_groups.empty()) return 1;
 
         assumps.resize(enc_groups.size());
         for(size_t idx=0; idx<enc_groups.size(); ++idx){
@@ -1342,6 +1344,7 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
     //      apply increMC wo. enable on pmap1
     ProbMap pmap1, pmap2;
     for(auto it : prob2Learnt){
+        // cout << it.first << " " << it.second.size() << endl;
         if(it.second.size()==1)
             pmap1[it.first] = it.second; // learnts size==1
         else
@@ -1381,18 +1384,20 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
         // }
     }
 
+    // cout << "After pmap1 " << accum << endl; 
+
 
     // pmap2
     if( pmap2.size() == 1){ // original Model Counting
         accum += calculate_prob(qlev, pmap2).first;
     }
-    else{                   // Incrmental Model Counting with enable variable
+    else if(!pmap2.empty()){                   // Incrmental Model Counting with enable variable
         // write cnf
         FILE* f_cnf = fopen(CNF_FILE, "w");
         vec<Var> map;
         size_t en_var_offset;
         profiler.set_WMCIO_time();
-        to_dimacs_cnf_en(f_cnf, qlev, prob2Learnt, map, en_var_offset);
+        to_dimacs_cnf_en(f_cnf, qlev, pmap2, map, en_var_offset);
         profiler.accum_WMCIO_time();
         fclose(f_cnf);
 
@@ -1409,7 +1414,6 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
 
         const vector<double> &probs = levs.get_probs();
 
-        // cout << "Or Here" << endl;
         // set random weights
         for (size_t i=0; i<en_var_offset; ++i){
             if (map[i] == -1)
@@ -1421,13 +1425,13 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
             }      
         }
 
-        vector<int> assumps(prob2Learnt.size());
+        vector<int> assumps(pmap2.size());
 
         for(size_t i=0; i<assumps.size(); ++i)
             assumps[i] = -map[ (map.size()-1)-i];
 
         size_t en_var_id = 0;
-        for (auto it : prob2Learnt)
+        for (auto it : pmap2)
         {   
             //assert(accum >= 0 && it.first >= 0 && left >= 0);
             if ( it.first == 0)
@@ -1465,6 +1469,7 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
         assert(assumps.size()==0);
     }
 
+    // cout << "After pmap2 " << accum << endl;
 
     return accum;
 }
@@ -1494,11 +1499,13 @@ Var mapVar(Var v, vec<Var> &map, Var &max)
 
 Var mapVar(Var v, vector<Var> &map, Var &max)
 {
-    if (map.size() <= v )
-    {
+    if (map.size() <= v){
         map.resize(v + 1, -1);
+        map[v] = max++;
     }
-    map[v] = max++;
+    else if(map[v]==-1){
+        map[v] = max++;
+    }
     return map[v];
 }
 
