@@ -11,7 +11,7 @@ bool Options::parse(int argc,char **argv) {
   bool return_value = true;
   while (1) {
     int option_index = 0;
-    c = getopt_long(argc, argv, "vhegyupnwkmsctdi", long_options, &option_index);
+    c = getopt_long(argc, argv, "vhegyupnwkmsctdiz", long_options, &option_index);
     if (c == -1) break;
     switch (c) {
     case 'v':
@@ -61,6 +61,9 @@ bool Options::parse(int argc,char **argv) {
       break;
     case 'i':
       ++increMC;
+      break;
+    case 'z':
+      ++disjointCube;
       break;
     case '?':
       // if (isprint(optopt)) fprintf (stderr, "Unknown option -%c.\n", optopt);
@@ -120,6 +123,9 @@ ostream& Options::print(ostream& out) const {
   out<< " -i ";
   out<< "    "<<" enable incremental model counting ";
   out<< endl;
+  out<< " -z ";
+  out<< "    "<<" enable disjoint cube cover ";
+  out<< endl;
   return out;
 }
 ostream& operator << (ostream& out, const Options& opt) {
@@ -140,5 +146,6 @@ ostream& operator << (ostream& out, const Options& opt) {
   if(opt.get_partial()) out << "-t ";
   if(opt.get_dynamic()) out << "-d ";
   if(opt.get_increMC()) out << "-i ";
+  if(opt.get_disjointCube()) out << "-z ";
   return out;
 }

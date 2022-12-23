@@ -22,6 +22,7 @@ struct Profiler
     pruneCnt(0),
     WMCCnt(0),
     AssumpMCCnt(0),
+    DisjCubeSuccCnt(0),
     cacheLookup(0),
     cacheHits(0),
     partialWMC(0),
@@ -32,7 +33,8 @@ struct Profiler
     accSATTime(0),
     accWMCTime(0),
     accMCQueryTime(0),
-    accMCSimpTime(0)
+    accMCSimpTime(0),
+    accBDDTime(0)
     {
         prgm_start = high_resolution_clock::now();
     }
@@ -51,6 +53,9 @@ struct Profiler
 
     inline void set_MCS_time() { mcs_start = high_resolution_clock::now(); }
     inline void accum_MCS_time() { accMCSimpTime += time_elapsed(mcs_start); }
+
+    inline void set_BDD_time() { bdd_start = high_resolution_clock::now(); }
+    inline void accum_BDD_time() { accBDDTime += time_elapsed(bdd_start); }
 
     inline double get_tot_time() const { return time_elapsed(prgm_start); }
     inline bool is_timeout() const { return get_tot_time() > TIME_LIMIT; }
@@ -90,6 +95,7 @@ struct Profiler
            << "  > # of calls to WMC          = " << p.WMCCnt << '\n'
            << "  > # of calls to AssumpWMC    = " << p.AssumpMCCnt << '\n'
            << "  > # of partial WMC           = " << p.partialWMC << '\n'
+           << "  > # of succesful Disj Cube   = " << p.DisjCubeSuccCnt << '\n'
            << "  > Avg. # of pruned clause    = " << (p.pruneCnt? (float)p.pruneClaCnt / p.pruneCnt : 0) << " (" << p.pruneClaCnt << "/" << p.pruneCnt << ")" << '\n'
            << "  > Avg. length of learnt      = " << (float)p.learntClaLen / p.learntClaNum << " (" << p.learntClaLen << "/" << p.learntClaNum << ")" << '\n'
            << "  > Push UNSAT Core Succ rate  = " << (float)p.pushUNSATCoreSuccess / p.pushUNSATCoreAttempt << " (" << p.pushUNSATCoreSuccess << "/" << p.pushUNSATCoreAttempt << ")" << '\n';
@@ -116,6 +122,7 @@ struct Profiler
            << "  > Time consumed on WMC IO    = " << p.accWMCIOTime << '\n'
            << "  > Time consumed on WMC Query = " << p.accMCQueryTime << '\n'
            << "  > Time consumed on WMC Simp  = " << p.accMCSimpTime << '\n'
+           << "  > Time consumed on BDD       = " << p.accBDDTime << '\n'
            << "  > Total time consumed        = " << p.get_tot_time() << '\n';
         return os;
     }
@@ -129,6 +136,7 @@ struct Profiler
     high_resolution_clock::time_point wmcio_start;
     high_resolution_clock::time_point mcq_start;
     high_resolution_clock::time_point mcs_start;
+    high_resolution_clock::time_point bdd_start;
     std::vector<size_t> selSATCnts;
     std::vector<size_t> selUNSATCnts;
     std::vector<size_t> dropCnts;
@@ -149,11 +157,13 @@ struct Profiler
     size_t      pushUNSATCoreAttempt;
     size_t      pushUNSATCoreSuccess;
     size_t      AssumpMCCnt;
+    size_t      DisjCubeSuccCnt;
     double      accSATTime;
     double      accWMCTime;
     double      accWMCIOTime;
     double      accMCQueryTime;
     double      accMCSimpTime;
+    double      accBDDTime;
 };
 
 #endif

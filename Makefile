@@ -1,8 +1,11 @@
+# ./configure --enable-dddmp --enable-obj --enable-static
+
 #DBG=1
 # Choose solver (MiniSat or Glucose)
 USE_GL=1
 # Choose version (minisat_simp, glucose_parallel for USE_SIMP=0)
 USE_SIMP=1
+
 
 CSRCS    = $(wildcard ./src/*.cc)
 NSRCS    = $(wildcard *.nw)
@@ -74,6 +77,16 @@ LIBD+=-L./src/minisat/simp
 CFLAGS+=-I./src/minisat/
 endif
 
+EXTERNAL+=cudd
+CFLAGS+=-I./src/cudd/cudd 
+CFLAGS+=-I./src/cudd/util
+CFLAGS+=-I./src/cudd/
+LIBD+=-L./src/cudd/cudd/.libs/
+LIBS+=-lcudd
+# LIBS+=-lmtr
+# LIBS+=-libst
+
+
 LIBS+=-lgmpxx 
 LIBS+=-lgmp
 
@@ -98,7 +111,7 @@ endif
 ## Filter used to typeset C++
 NW_FILTER=-filter C++.filter
 
-.PHONY: m gl all doc
+.PHONY: cudd m gl all doc
 
 all:
 	make $(EXE)
@@ -114,6 +127,9 @@ m:
 gl:
 	@export MROOT=`pwd`/src/glucose-4.1 ; cd ./src/glucose-4.1/simp;     make CXX=$(CXX) LIB=glucose_simp $(MSAT)
 	@export MROOT=`pwd`/src/glucose-4.1 ; cd ./src/glucose-4.1/parallel; make CXX=$(CXX) LIB=glucose_parallel $(MSAT)
+
+cudd:
+	@export MROOT=`pwd`/src/cudd/; cd ./src/cudd; make;
 
 sources: $(GENF)
 
@@ -147,6 +163,7 @@ clean:
 	@export MROOT=`pwd`/src/minisat ; cd ./src/minisat/simp; make CXX=$(CXX) clean
 	@export MROOT=`pwd`/src/glucose-4.1 ; cd ./src/glucose-4.1/simp    ; make CXX=$(CXX) clean
 	@export MROOT=`pwd`/src/glucose-4.1 ; cd ./src/glucose-4.1/parallel; make CXX=$(CXX) clean
+	@export MROOT=`pwd`/src/cudd/; cd ./src/cudd/; make clean;
 
 doc: $(PDFS)
 

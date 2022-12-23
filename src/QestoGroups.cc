@@ -76,6 +76,9 @@ void QestoGroups::init(){
 		level_counter.resize(levs.lev_count());
 		level_map.resize(levs.lev_count());
 		level_maxV.resize(levs.lev_count());
+		level_bdd_manager.resize(levs.lev_count());
+		level_bdd_Grp2Id.resize(levs.lev_count());
+		level_bdd_Id2Grp.resize(levs.lev_count());
     }
 }
 
@@ -274,6 +277,11 @@ void QestoGroups::assign_pure_lits() {
 
 QestoGroups::~QestoGroups() {
 	delete [] abstractions;
+	for(auto ddMgr : level_bdd_manager){
+		if(ddMgr){
+			Cudd_Quit(ddMgr);
+		}
+	}
 }
 
 

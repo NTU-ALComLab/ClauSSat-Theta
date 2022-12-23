@@ -11,6 +11,8 @@
 #include "Profiler.hh"
 #include "MiniSatExt.hh"
 #include "DnnfWrapper.hh"
+#include "cudd/cudd.h"
+#include "util/util.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -84,12 +86,17 @@ vector<Cache> sel_caches;
 vector<double> ret_prob;
 vector<ProbMap> prob2Learnts;
 
-vector< vector<Var> > level_map; // map from group_id, selection id, to variables.
-vector<DNNFCounter>   level_counter; //
-vector<size_t>        level_maxV;     
 
+// for incremental model counting using DNNF
+vector< vector<Var> >   level_map; // map from group_id, selection id, to variables.
+vector<DNNFCounter>     level_counter; //
+vector<size_t>          level_maxV;     
 
- private: 
+// for disjoint cube enumeration using BDD 
+vector<DdManager*>      level_bdd_manager;
+vector<vector<size_t>>  level_bdd_Grp2Id; // map from group id to bdd variable id
+vector<vector<size_t>>  level_bdd_Id2Grp; // mapr from bdd var id to group id
+private: 
 
 inline Var s(size_t quant_level,size_t group_index) const;
 inline Var t(size_t quant_level,size_t group_index) const;
@@ -173,7 +180,12 @@ void    to_dimacs(FILE* f, size_t qlev);
 void    to_dimacs_cnf_en(FILE* f, size_t qlev, const ProbMap& prob2Learnt, vec<Var>& map, size_t& en_var_offset);
 void    compile_cnf_to_nnf(size_t qlev, bool en=false);
 double  incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt, bool has_thres=false, double thres=-1);
-double  assump_level_wmc(size_t qlev, const vector< vector<EncGrp> >& enc_learnts);
+double  assump_level_wmc(size_t qlev, const vector<EncGrp>& enc_learnt); // use clause to represent cube (assumptions)
+
+// Disjoint Cube Cover using BDD
+// initialize bdd manager and construct var
+void    init_level_bddMgr_and_var(size_t qlev);
+bool    to_disjoint_cube(size_t qlev, const vector<vector<EncGrp>>& enc_learnts, vector<vector<EncGrp>>& disjoint_learnts);
 
 // Caching
 bool lookup(size_t qlev, const vec<Lit>& parent_selection, double& prob);

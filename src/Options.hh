@@ -24,6 +24,7 @@ bool parse(int argc,char **argv);
   , partial ( 0 )
   , dynamic ( 0 )
   , increMC ( 0 )
+  , disjointCube ( 0 )
   {}
   const std::vector<string>&    get_rest() const { return rest; }
   std::ostream&                 print(std::ostream& out) const;
@@ -43,6 +44,7 @@ bool parse(int argc,char **argv);
   int                         get_partial() const { return partial ;}
   int                         get_dynamic() const { return dynamic ;}
   int                         get_increMC() const { return increMC ;}
+  int                         get_disjointCube() const { return disjointCube ;}
   friend std::ostream& operator << (std::ostream& out, const Options& opt);
 private:
   std::vector<string> rest;
@@ -62,5 +64,6 @@ private:
   int partial ;
   int dynamic ;
   int increMC ;
+  int disjointCube ;
 };
 #endif

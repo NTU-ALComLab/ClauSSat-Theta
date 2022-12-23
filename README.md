@@ -1,6 +1,10 @@
 # ClauSSat
 This repository is an implementation of the 2021 AAAI paper titled "A Sharp Leap from Quantified Boolean Formulas to Stochastic Boolean Satisfiability Solving".
-To compile, type
+To compile, first configure CUDD package
+```
+$ cd src/cudd/; ./configure --enable-dddmp --enable-obj --enable-static; cd ../../;
+```
+And then compile by typing
 ```
 $ make
 ```
