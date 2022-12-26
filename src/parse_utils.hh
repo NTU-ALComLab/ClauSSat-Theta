@@ -103,7 +103,16 @@ static double parseFloat(B& in) {
     int     deg = 0;
     double  flt;
     skipWhitespace(in);
-    val = parseInt(in);
+    bool neg = false;
+    int int_part = parseInt(in);
+    if (int_part < 0){
+        neg = true;
+        val = -int_part;
+    }
+    if(*in == ' '){
+        return int_part;
+    }
+    // val = parseInt(in);
     if (*in != char(46)) fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
     /* assert(*in == '0'); */
     /* if (*in != '0') fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", *in), exit(3); */
@@ -118,7 +127,8 @@ static double parseFloat(B& in) {
     }
     flt = double(val);
     for (int i = 0; i < deg; ++i) flt *= 0.1;
-    return flt;
+    return neg ? -flt : flt;
+    // return flt;
 }
 
 

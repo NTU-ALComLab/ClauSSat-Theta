@@ -50,3 +50,6 @@ bug*
 examples
 generated
 tags
+claussat
+wmc/temp.*
+wmc/level*
