@@ -1402,7 +1402,10 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
     //     accum += calculate_prob(qlev, pmap2).first;
     // }
     // else if(!pmap2.empty()){                   // Incrmental Model Counting with enable variable
-    if(!pmap2.empty()){
+
+    ProbMap pmap3;
+
+    if(!pmap2.empty()){ // incremental model counting without enable variable
         // TODO
         if(opt.get_disjointCube()){
             if(!level_bdd_manager[qlev]) init_level_bddMgr_and_var(qlev);
@@ -1418,91 +1421,94 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
                         sel_prob += assump_level_wmc(qlev, disjoint_learnt);
                         // cout << sel_prob << endl;
                     }
+                    accum += it.first * sel_prob;
+                    left -= sel_prob;
                 }
                 else{
-                    sel_prob = 1 - selection_WMC(qlev, it.second);
-                }
-                accum += it.first * sel_prob;
-                left -= sel_prob;
-            }
-        }
-        else{
-            // write cnf
-            FILE* f_cnf = fopen(CNF_FILE, "w");
-            vec<Var> map;
-            size_t en_var_offset;
-            profiler.set_WMCIO_time();
-            to_dimacs_cnf_en(f_cnf, qlev, pmap2, map, en_var_offset);
-            profiler.accum_WMCIO_time();
-            fclose(f_cnf);
-
-            // compile cnf
-            compile_cnf_to_nnf(qlev, true);
-
-            // successive incremental model count
-
-            ifstream f_nnf(NNF_FILE);
-            if( is_file_empty(f_nnf) ) // unsat formula
-                return 1;
-            DNNFCounter model_counter(f_nnf);
-            f_nnf.close();
-
-            const vector<double> &probs = levs.get_probs();
-
-            // set random weights
-            for (size_t i=0; i<en_var_offset; ++i){
-                if (map[i] == -1)
-                    continue;
-                //assert(i >= probs.size() || probs[i] != -1);
-                if ( i < probs.size() ){
-                    assert(levs.type(i)==RANDOM);
-                    model_counter.set_lit_weight(map[i], probs[i]);  
-                }      
-            }
-
-            vector<int> assumps(pmap2.size());
-
-            for(size_t i=0; i<assumps.size(); ++i)
-                assumps[i] = -map[ (map.size()-1)-i];
-
-            size_t en_var_id = 0;
-            for (auto it : pmap2)
-            {   
-                //assert(accum >= 0 && it.first >= 0 && left >= 0);
-                if ( it.first == 0)
-                    continue;
-                if (accum + it.first * left < get_ret_prob((int)qlev - 1))
-                    return -1;
-
-                profiler.WMCCnt++;
-                profiler.AssumpMCCnt++;
-
-                *(assumps.end()-1) = -assumps.back(); // enable the corresponding learnt clause
-                profiler.set_MCQ_time();
-                double p = model_counter.assump_model_count(assumps);
-                profiler.accum_MCQ_time();
-
-                sel_prob = 1 - p;
-
-                profiler.set_MCS_time();
-                model_counter.condition_on( vector<int>{ -assumps.back() } );
-                profiler.accum_MCS_time();
-                assert(sel_prob >= 0 && sel_prob <= 1);
-                assumps.pop_back();
-
-                accum += it.first * sel_prob;
-                left -= sel_prob;
-                en_var_id ++;
-
-                if(has_thres){
-                    if(accum >= thres)
-                        return accum;
-                    if(accum+left < thres)
-                        return accum+left;
+                    pmap3[it.first] = it.second;
+                    // sel_prob = 1 - selection_WMC(qlev, it.second);
                 }
             }
-            assert(assumps.size()==0);
         }
+        else pmap3 = pmap2;
+    }
+
+    if(!pmap3.empty()){ // incremental Model Counting with enable variable
+        // write cnf
+        FILE* f_cnf = fopen(CNF_FILE, "w");
+        vec<Var> map;
+        size_t en_var_offset;
+        profiler.set_WMCIO_time();
+        to_dimacs_cnf_en(f_cnf, qlev, pmap3, map, en_var_offset);
+        profiler.accum_WMCIO_time();
+        fclose(f_cnf);
+
+        // compile cnf
+        compile_cnf_to_nnf(qlev, true);
+
+        // successive incremental model count
+
+        ifstream f_nnf(NNF_FILE);
+        if( is_file_empty(f_nnf) ) // unsat formula
+            return 1;
+        DNNFCounter model_counter(f_nnf);
+        f_nnf.close();
+
+        const vector<double> &probs = levs.get_probs();
+
+        // set random weights
+        for (size_t i=0; i<en_var_offset; ++i){
+            if (map[i] == -1)
+                continue;
+            //assert(i >= probs.size() || probs[i] != -1);
+            if ( i < probs.size() ){
+                assert(levs.type(i)==RANDOM);
+                model_counter.set_lit_weight(map[i], probs[i]);  
+            }      
+        }
+
+        vector<int> assumps(pmap3.size());
+
+        for(size_t i=0; i<assumps.size(); ++i)
+            assumps[i] = -map[ (map.size()-1)-i];
+
+        size_t en_var_id = 0;
+        for (auto it : pmap3)
+        {   
+            //assert(accum >= 0 && it.first >= 0 && left >= 0);
+            if ( it.first == 0)
+                continue;
+            if (accum + it.first * left < get_ret_prob((int)qlev - 1))
+                return -1;
+
+            profiler.WMCCnt++;
+            profiler.AssumpMCCnt++;
+
+            *(assumps.end()-1) = -assumps.back(); // enable the corresponding learnt clause
+            profiler.set_MCQ_time();
+            double p = model_counter.assump_model_count(assumps);
+            profiler.accum_MCQ_time();
+
+            sel_prob = 1 - p;
+
+            profiler.set_MCS_time();
+            model_counter.condition_on( vector<int>{ -assumps.back() } );
+            profiler.accum_MCS_time();
+            assert(sel_prob >= 0 && sel_prob <= 1);
+            assumps.pop_back();
+
+            accum += it.first * sel_prob;
+            left -= sel_prob;
+            en_var_id ++;
+
+            if(has_thres){
+                if(accum >= thres)
+                    return accum;
+                if(accum+left < thres)
+                    return accum+left;
+            }
+        }
+        assert(assumps.size()==0);
     }
 
     // cout << "After pmap2 " << accum << endl;
@@ -1558,6 +1564,7 @@ bool QestoGroups::to_disjoint_cube(size_t qlev, const vector<vector<EncGrp>>& en
     for(auto enc_learnt : enc_learnts){
         // cout << "learnt size=" << enc_learnt.size() <<  endl;
         DdNode* product = Cudd_ReadOne(bdd_mgr);
+        Cudd_Ref(product);
         for(auto enc_grp: enc_learnt){ // construct cube
             // cout << "Constructing Cube ..." << endl;
             bool neg = !get_select(enc_grp); // NOTE really weird ....
