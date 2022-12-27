@@ -270,7 +270,7 @@ void ReadQ::read() {
   compact_prefix();
   read_clauses();
 
-  print_prefix();
+  // print_prefix();
   
 
   if (!unquantified_variables.empty ()) {
