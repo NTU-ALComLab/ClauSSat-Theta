@@ -27,36 +27,36 @@ class Options:
 
 def generate(options, output_hh, output_cc):
   preprocessor_id = options.name+'_HH'
-  print >>output_hh, '#ifndef', preprocessor_id 
-  print >>output_hh, '#define', preprocessor_id 
-  print >>output_hh, '#include <string>'
-  print >>output_hh, '#include <vector>'
-  print >>output_hh, '#include <ostream>'
-  print >>output_hh, 'using std::string;'
-  print >>output_hh, 'class', options.name, '{'
-  print >>output_hh, 'public:'
-  print >>output_hh, 'bool parse(int argc,char **argv);'
-  print >>output_hh, ' ', options.name, '()'
+  print('#ifndef', preprocessor_id, file=output_hh) 
+  print('#define', preprocessor_id, file=output_hh) 
+  print('#include <string>', file=output_hh)
+  print('#include <vector>', file=output_hh)
+  print('#include <ostream>', file=output_hh)
+  print('using std::string;', file=output_hh)
+  print('class', options.name, '{', file=output_hh)
+  print('public:', file=output_hh)
+  print('bool parse(int argc,char **argv);', file=output_hh)
+  print(' ', options.name, '()', file=output_hh)
   for i in range(len(options.options)):
-    print >>output_hh, ' ', (':' if i==0 else ','),
+    print(' ', (':' if i==0 else ','), end=' ', file=output_hh)
     o=options.options[i]
-    print >>output_hh, o.identifier, '(', o.default , ')'
-  print >>output_hh, '  {}'
+    print(o.identifier, '(', o.default , ')', file=output_hh)
+  print('  {}', file=output_hh)
 
-  print >>output_hh, '  const std::vector<string>&    get_rest() const { return rest; }'
-  print >>output_hh, '  std::ostream&                 print(std::ostream& out) const;'
+  print('  const std::vector<string>&    get_rest() const { return rest; }', file=output_hh)
+  print('  std::ostream&                 print(std::ostream& out) const;', file=output_hh)
   for o in options.options:
-    print >>output_hh, '  int                         get_'+o.identifier+'() const', '{ return', o.identifier, ';}'
-    if o.has_arguments: print >>output_hh, '  string                      get_'+o.identifier+'_arg() const { return', o.identifier+'_arg', ';}' 
-  print >>output_hh, '  friend std::ostream& operator << (std::ostream& out, const '+options.name+'& opt);'
+    print('  int                         get_'+o.identifier+'() const', '{ return', o.identifier, ';}', file=output_hh)
+    if o.has_arguments: print('  string                      get_'+o.identifier+'_arg() const { return', o.identifier+'_arg', ';}', file=output_hh) 
+  print('  friend std::ostream& operator << (std::ostream& out, const '+options.name+'& opt);', file=output_hh)
     
-  print >>output_hh, 'private:'
-  print >>output_hh, '  std::vector<string> rest;'
+  print('private:', file=output_hh)
+  print('  std::vector<string> rest;', file=output_hh)
   for o in options.options:
-    print >>output_hh, '  int',  o.identifier, ';'
-    if o.has_arguments: print >>output_hh, '  string',  o.identifier+'_arg', ';'
-  print >>output_hh, '};'
-  print >>output_hh, '#endif'
+    print('  int',  o.identifier, ';', file=output_hh)
+    if o.has_arguments: print('  string',  o.identifier+'_arg', ';', file=output_hh)
+  print('};', file=output_hh)
+  print('#endif', file=output_hh)
 
   # ---------------------------------------------------
 
@@ -64,55 +64,55 @@ def generate(options, output_hh, output_cc):
   for o in options.options:
     option_format_string = option_format_string + o.short_option[1]
     if o.has_arguments: option_format_string=option_format_string+':'
-  print >>output_cc, '#include <iostream>'
-  print >>output_cc, '#include <stdlib.h>'
-  print >>output_cc, '#include <getopt.h>'
-  print >>output_cc, '#include <stdio.h>'
-  print >>output_cc, 'using std::ostream;'
-  print >>output_cc, 'using std::endl;'
-  print >>output_cc, '#include', '"'+options.name+'.hh"'
-  print >>output_cc, 'bool',  options.name+'::parse(int argc,char **argv) {'
-  print >>output_cc, '  static struct option long_options[] = {{0, 0, 0, 0}};'
-  print >>output_cc, '  int c;'
-  print >>output_cc, '  bool return_value = true;'
-  print >>output_cc, '  while (1) {'
-  print >>output_cc, '    int option_index = 0;'
-  print >>output_cc, '    c = getopt_long(argc, argv, "'+option_format_string+'", long_options, &option_index);'
-  print >>output_cc, '    if (c == -1) break;'
-  print >>output_cc, '    switch (c) {'
+  print('#include <iostream>', file=output_cc)
+  print('#include <stdlib.h>', file=output_cc)
+  print('#include <getopt.h>', file=output_cc)
+  print('#include <stdio.h>', file=output_cc)
+  print('using std::ostream;', file=output_cc)
+  print('using std::endl;', file=output_cc)
+  print('#include', '"'+options.name+'.hh"', file=output_cc)
+  print('bool',  options.name+'::parse(int argc,char **argv) {', file=output_cc)
+  print('  static struct option long_options[] = {{0, 0, 0, 0}};', file=output_cc)
+  print('  int c;', file=output_cc)
+  print('  bool return_value = true;', file=output_cc)
+  print('  while (1) {', file=output_cc)
+  print('    int option_index = 0;', file=output_cc)
+  print('    c = getopt_long(argc, argv, "'+option_format_string+'", long_options, &option_index);', file=output_cc)
+  print('    if (c == -1) break;', file=output_cc)
+  print('    switch (c) {', file=output_cc)
   for o in options.options:
-    print >>output_cc, '    case \''+o.short_option[1]+'\':'
-    print >>output_cc, '      ++'+o.identifier+';'
-    if o.has_arguments: print >>output_cc, '      '+o.identifier+'_arg = optarg;'
-    print >>output_cc, '      break;'
+    print('    case \''+o.short_option[1]+'\':', file=output_cc)
+    print('      ++'+o.identifier+';', file=output_cc)
+    if o.has_arguments: print('      '+o.identifier+'_arg = optarg;', file=output_cc)
+    print('      break;', file=output_cc)
 
-  print >>output_cc, '    case \'?\':'
-  print >>output_cc, '      // if (isprint(optopt)) fprintf (stderr, "Unknown option -%c.\\n", optopt);'
-  print >>output_cc, '      return_value = false;'
-  print >>output_cc, '      break;'
-  print >>output_cc, '    }'
-  print >>output_cc, '  }'
-  print >>output_cc, '  for (int i=optind; i<argc; ++i) rest.push_back(argv[i]);'
-  print >>output_cc, '  return return_value;'
-  print >>output_cc, '}'
-
-#
-  print >>output_cc, 'ostream&',  options.name+'::print(ostream& out) const {'
-  for o in options.options:
-    print >>output_cc, '  out<< "',o.short_option,'";'
-    if (o.has_arguments): print >>output_cc, '  out<< " ARG";'
-    print >>output_cc, '  out<< "    "<<"',o.description,'";'
-    print >>output_cc, '  out<< endl;'
-  print >>output_cc, '  return out;'
-  print >>output_cc, '}'
+  print('    case \'?\':', file=output_cc)
+  print('      // if (isprint(optopt)) fprintf (stderr, "Unknown option -%c.\\n", optopt);', file=output_cc)
+  print('      return_value = false;', file=output_cc)
+  print('      break;', file=output_cc)
+  print('    }', file=output_cc)
+  print('  }', file=output_cc)
+  print('  for (int i=optind; i<argc; ++i) rest.push_back(argv[i]);', file=output_cc)
+  print('  return return_value;', file=output_cc)
+  print('}', file=output_cc)
 
 #
-  print >>output_cc, 'ostream& operator << (ostream& out, const '+options.name+'& opt) {'
-  print >>output_cc, '  out << "c options: ";'
+  print('ostream&',  options.name+'::print(ostream& out) const {', file=output_cc)
   for o in options.options:
-    print >>output_cc, '  if(opt.get_'+o.identifier+'()) out << "'+o.short_option+' ";'
-  print >>output_cc, '  return out;'
-  print >>output_cc, '}'
+    print('  out<< "',o.short_option,'";', file=output_cc)
+    if (o.has_arguments): print('  out<< " ARG";', file=output_cc)
+    print('  out<< "    "<<"',o.description,'";', file=output_cc)
+    print('  out<< endl;', file=output_cc)
+  print('  return out;', file=output_cc)
+  print('}', file=output_cc)
+
+#
+  print('ostream& operator << (ostream& out, const '+options.name+'& opt) {', file=output_cc)
+  print('  out << "c options: ";', file=output_cc)
+  for o in options.options:
+    print('  if(opt.get_'+o.identifier+'()) out << "'+o.short_option+' ";', file=output_cc)
+  print('  return out;', file=output_cc)
+  print('}', file=output_cc)
 
 def main():
   options = Options("Options")

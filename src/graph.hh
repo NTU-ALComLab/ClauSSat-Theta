@@ -36,8 +36,15 @@ public:
 	}
 
 	inline void setLitWeight(int lit, double w){
-		weights.setWeightFor(lit, w);
-		weights.setWeightFor(-lit, 1-w);
+		// std::cout << "set lit weight in graph lit " << lit << " weight " << w << std::endl;
+		if( w == double(-1)){
+			weights.setWeightFor(lit, 1);
+			weights.setWeightFor(-lit, 1);
+		}
+		else{
+			weights.setWeightFor(lit, w);
+			weights.setWeightFor(-lit, 1-w);
+		}
 	}
 
 	int nbVars;

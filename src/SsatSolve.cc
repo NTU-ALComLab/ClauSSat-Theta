@@ -114,6 +114,7 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                             enc_sel_lits.push_back(vector<EncGrp>({encode_sel(gi, 0)}));
                     ret = selection_WMC(qlev, enc_sel_lits);
                 }
+                cout << "Last Level Random prob=" << ret << endl;
             }
             else
             {
@@ -241,15 +242,17 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                     if(opt.get_increMC()){
                         ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
                         double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
-                        // cout << "ref / imp = " << ref << " / " << ret << endl;
-                        // cout << "qlev = " << qlev << endl;
-                        // if(ref != ret){
-                        //     cout << "Warning!! Error Probability" << endl;
-                        //     exit(1);
-                        // }
+                        cout << "ref / imp = " << ref << " / " << ret << endl;
+                        cout << "qlev = " << qlev << endl;
+                        cout << abs(ref-ret) << endl;
+                        if( abs(ref - ret) > 10e-5){
+                            cout << "Warning!! Error Probability" << endl;
+                            exit(1);
+                        }
                     }
                     else{
                         ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                        cout << "qlev = " << qlev << " " << ret << endl;
                     }
                     prob2Learnts[qlev].clear();
                 }
@@ -334,36 +337,6 @@ void QestoGroups::get_learnt_clause_e(size_t qlev, vector<EncGrp> &enc_groups, b
     for (size_t gi : groups.groups(qlev))
         if (groups.is_select(gi))
             enc_groups.push_back(encode_sel(gi, 0));
-    /* if (qlev == levs.lev_count() - 2 && isZero) { */
-    /*     for (size_t gc : groups.groups(qlev + 1)) { */
-    /*         if (groups.is_lev_select(gc)) */
-    /*             enc_groups.push_back( encode_sel(groups.parent(gc), 0) ); */
-    /*     } */
-    /* } */
-    /* else { */
-    /*     for (size_t gi : groups.groups(qlev)) */
-    /*         if (groups.is_select(gi)) enc_groups.push_back( encode_sel(gi, 0) ); */
-    /* } */
-
-    /* eLearnt.clear(); */
-    /* if (opt.get_partial()) { */
-    /*     for (size_t gi : groups.groups(qlev)) { */
-    /*         if (!groups.is_select(gi)) continue; */
-    /*         if (opt.get_pin()) { */
-    /*             const vector<Pin*>& ps = groups.getPins(gi); */
-    /*             for (Pin * pP : ps) eLearnt.push( mkLit(pinVar(qlev, pP->id)) ); */
-    /*         } */
-    /*         else { */
-    /*             const LitSet& ls = groups.lits(gi); */
-    /*             FOR_EACH(li, ls) eLearnt.push( *li ); */
-    /*         } */
-    /*     } */
-    /*     remove_duplicate_lits( qlev, eLearnt ); */
-    /* } */
-    /* else { */
-    /*     for (size_t gi : groups.groups(qlev)) */
-    /*         eLearnt.push( ~mkLit(s(qlev,gi)) ); */
-    /* } */
 }
 
 void QestoGroups::add_learnt_clause_e(size_t qlev, vector<EncGrp> &enc_groups, vec<Lit> &assump, bool always_enable)
@@ -433,19 +406,6 @@ void QestoGroups::get_learnt_clause_r(size_t qlev, vector<EncGrp> &enc_groups, b
             }
         }
     }
-    /* for (size_t gc : groups.groups(qlev + 1)) { */
-    /*     if (qlev == 0 || groups.is_select(groups.grandparent(gc))) { */
-    /*         size_t gp = groups.parent(gc); */
-    /*         /1* if (enc_groups.size() && gp == get_group( enc_groups.back() )) continue; *1/ */
-    /*         if (groups.is_lev_select(gp) || groups.is_lev_select(gc)) { */
-    /*             /1* if (qlev == levs.lev_count() - 2 && isZero && *1/ */
-    /*             /1*     !(groups.is_lev_select(gp) && groups.is_lev_select(gc))) continue; *1/ */
-    /*             enc_gi = encode_sel(gp, !groups.is_lev_select(gp)); */
-    /*             if (enc_groups.empty() || enc_gi != enc_groups.back()) */
-    /*                 enc_groups.push_back(enc_gi); */
-    /*         } */
-    /*     } */
-    /* } */
 
     assert(numSelected >= enc_groups.size());
     profiler.pruneClaCnt += numSelected - enc_groups.size();
@@ -492,13 +452,6 @@ void QestoGroups::push_unsat_core(size_t qlev, vector<EncGrp> &enc_groups, vec<L
 
     ++profiler.pushUNSATCoreAttempt;
 
-    /* vec<Lit> assump; */
-    /* assump.capacity(tmpLits.size()); */
-    /* int n = groups.groups(qlev-1).size(); */
-    /* for (int i = 0; i < n; ++i) */
-    /*     assump.push(tmpLits[i]); */
-    /* for (int i = n; i < tmpLits.size(); ++i) */
-    /*     assump.push(~tmpLits[i]); */
 
     bool all_empty = true;
     for (EncGrp enc_gi : enc_groups)

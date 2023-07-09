@@ -54,3 +54,4 @@ claussat
 wmc/temp.*
 wmc/level*
 wmc/*.log
+src/*.bak
