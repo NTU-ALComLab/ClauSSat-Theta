@@ -283,7 +283,10 @@ void ReadQ::read() {
       Quantification quantification;
       quantification.first=EXISTENTIAL;
       vector<Var> variables;
-      FOR_EACH(vi,unquantified_variables) variables.push_back(*vi);
+      FOR_EACH(vi,unquantified_variables) {
+        cout << "Unquantified variable found!! " << *vi << endl;
+        variables.push_back(*vi);
+      }
       quantification.second=VarVector(variables);
       quantifications.insert(quantifications.begin(), quantification);
     }

@@ -59,6 +59,8 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
         exit(0);
     }
 
+    // cout << "solving lev ..." << qlev << endl;
+
     abstractions[qlev].simplify();
 
     double ret = 0, prob = 0;
@@ -100,11 +102,13 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
         { // RANDOM
             if (sat)
             {
+                // cout << "Started model counting ... " << endl;
                 if (opt.get_increMC()){
                     vector<EncGrp> enc_sel_lits;
                     for (size_t gi : groups.groups(qlev))
                         if (qlev == 0 || groups.is_select(groups.parent(gi)))
                             enc_sel_lits.push_back( encode_sel(gi, 1) );
+                    // cout << "before incre model counting ... " << endl;
                     ret = assump_level_wmc(qlev, enc_sel_lits);
                 }
                 else{
@@ -114,7 +118,7 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                             enc_sel_lits.push_back(vector<EncGrp>({encode_sel(gi, 0)}));
                     ret = selection_WMC(qlev, enc_sel_lits);
                 }
-                cout << "Last Level Random prob=" << ret << endl;
+                // cout << "Last Level Random prob=" << ret << endl;
             }
             else
             {
@@ -160,7 +164,7 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                     enc_max_lev_selection.clear();
                     for (size_t gi : groups.groups(qlev))
                         enc_max_lev_selection.push_back(encode_sel(gi, groups.is_lev_select(gi)));
-
+                    // cout << getSolverName(qlev) << " update max prob = " << ret << '\n';
 #ifndef NDEBUG
                     cout << getSolverName(qlev) << " update max prob = " << ret << '\n';
                     print_encgrps(enc_max_lev_selection);
@@ -241,18 +245,19 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
                 if(!prob2Learnts[qlev].empty()){
                     if(opt.get_increMC()){
                         ret = incre_calculate_prob(qlev, prob2Learnts[qlev], has_thres, thres_prob);
-                        double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
-                        cout << "ref / imp = " << ref << " / " << ret << endl;
-                        cout << "qlev = " << qlev << endl;
-                        cout << abs(ref-ret) << endl;
-                        if( abs(ref - ret) > 10e-5){
-                            cout << "Warning!! Error Probability" << endl;
-                            exit(1);
-                        }
+                        // double ref = calculate_prob(qlev, prob2Learnts[qlev]).first;
+                        // cout << "ref / imp = " << ref << " / " << ret << endl;
+                        // cout << "qlev = " << qlev << endl;
+                        // cout << abs(ref-ret) << endl;
+                        // if( abs(ref - ret) > 10e-5){
+                            // cout << "Warning!! Error Probability" << endl;
+                            // exit(1);
+                        // }
                     }
                     else{
+                        // cout << "before calculate probability ..." << endl;
                         ret = calculate_prob(qlev, prob2Learnts[qlev]).first;
-                        cout << "qlev = " << qlev << " " << ret << endl;
+                        // cout << "qlev = " << qlev << " " << ret << endl;
                     }
                     prob2Learnts[qlev].clear();
                 }
@@ -266,8 +271,12 @@ double QestoGroups::solve_ssat_recur(size_t qlev)
     for (int i = parent_selection.size(); i < assump.size(); ++i)
         abstractions[qlev].addClause(~assump[i]);
 
-    if (has_thres)
+    if (has_thres){
+        // cout << "has Threshold???" << endl;
+        // cout << (ret >= thres_prob) << endl;
+        // cout << ret << " " << thres_prob << endl;
         ret = ret >= thres_prob;
+    }
 
     if (opt.get_cache() && ret != -1)
         record(qlev, parent_selection, ret);
@@ -1293,6 +1302,7 @@ double QestoGroups::assump_level_wmc(size_t qlev, const vector<EncGrp> &enc_lear
         // cout << "Assume " << t(qlev, gi) <<  " var: " << assumps[idx] << endl;
     }
     // }
+    // cout << "Before calling assump model count beeeeep" << endl;
     profiler.set_MCQ_time();
     double ret = counter.assump_model_count(assumps);
     profiler.accum_MCQ_time();
@@ -1340,6 +1350,8 @@ double QestoGroups::incre_calculate_prob(size_t qlev, const ProbMap& prob2Learnt
 
         accum += it.first * sel_prob;
         left -= sel_prob;
+
+        cout << "IncreMC " << it.first << ": # of cubes = " << it.second.size() << ", prob = " << sel_prob << endl;
 
         // if(has_thres){
         //     if(accum >= thres)

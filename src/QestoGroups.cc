@@ -48,6 +48,7 @@ QestoGroups::QestoGroups(const Options& opt,
 ,infos(levs.lev_count()+1)
 
 {
+	// cout << "levs.levCnt = " << levs.lev_count() << endl;
   assert(levs.lev_count());
   assert( opt.get_ssat() || level_type(levs.lev_count()-1)==EXISTENTIAL);
   if( !opt.get_ssat() && level_type(levs.lev_count()-1) != EXISTENTIAL ) cout << "Error: The last level is universal." << endl;

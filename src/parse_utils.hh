@@ -109,6 +109,8 @@ static double parseFloat(B& in) {
         neg = true;
         val = -int_part;
     }
+    else
+        val = int_part;
     if(*in == ' '){
         return int_part;
     }
@@ -127,8 +129,15 @@ static double parseFloat(B& in) {
     }
     flt = double(val);
     for (int i = 0; i < deg; ++i) flt *= 0.1;
+    if(*in=='e'){
+        ++in; ++in;
+        int pow = parseInt(in);
+        for (int i = 0; i < pow; ++i) flt *= 0.1;
+    }
+    
     return neg ? -flt : flt;
     // return flt;
+
 }
 
 

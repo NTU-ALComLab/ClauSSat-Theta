@@ -7,7 +7,7 @@ TIME = '/usr/bin/time -v'
 TIMEOUT = 'timeout {}'.format(timeLim)
 
 SOLVER = 'claussat'
-EXEC = './claussat -uwsci'
+EXEC = './claussat -s'
 FORM = 'sdimacs'
 
 LOG_DIR = 'logs/'
@@ -41,7 +41,12 @@ SSAT_DIR = [
                 # 'benchmarks/Counter/'+FORM ,
                 # 'benchmarks/tlc/'+FORM ,
                 # 'benchmarks/Adder/'+FORM
-               ]
+                'benchmarks/TSSAT/gttt_3x3/',
+                'benchmarks/TSSAT/Robots/',
+                'benchmarks/TSSAT/stracomp/',
+                'benchmarks/TSSAT/tlc/',
+                # 'benchmarks/TSSAT/Tree',
+                ]
 
 
 

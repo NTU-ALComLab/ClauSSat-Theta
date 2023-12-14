@@ -132,8 +132,10 @@ int main(int argc, char** argv) {
 	}
 	bool r = 0;
 	LevelInfo levs(qf.pref, qf.prob, qf.thres);
+	// cout << "levs in Main " << levs.lev_count() << endl;
 	Groups* grs=NULL;
 	grs=new Groups(options, levs, qf);
+	// cout << "levs in Main " << grs->get_levs().lev_count() << endl;
 	#ifndef NDEBUG
 	grs->print();
 	#endif
