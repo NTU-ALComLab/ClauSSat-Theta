@@ -1,4 +1,4 @@
-# ClauSSat
+# ClauSSat(Θ)
 This is an SSAT(Θ) solver extended from the SSAT solver ClauSSat.
 To compile, first configure CUDD package
 ```
