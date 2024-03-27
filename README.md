@@ -19,5 +19,17 @@ The instances in the folder "MAX_PCTL" encoded the parameter synthesis problem w
 are generated from SSAT instances.
 
 
+## Reference
+* [AAAI'24 paper](https://ojs.aaai.org/index.php/AAAI/article/view/28637):
+  ```
+  @inproceedings{Fan_Jiang_2024,
+      author     = {Fan, Yu-Wei and Jiang, Jie-Hong R.},
+      title      = {Unifying Decision and Function Queries in Stochastic Boolean Satisfiability},
+      booktitle  = {Proceedings of the AAAI Conference on Artificial Intelligence},
+      DOI        = {10.1609/aaai.v38i8.28637},
+      year       = {2024}
+   }
+  ```
+
 ## Contact
 If you have any problems or suggestions, please create an issue or contact us at r11943096@ntu.edu.tw
